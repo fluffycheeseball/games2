@@ -2,6 +2,7 @@ import { Piece } from './../decoder/dtos/piece';
 import { Component, OnInit, HostListener } from '@angular/core';
 import { ViewChild } from '@angular/core';
 import { ElementRef } from '@angular/core';
+import { log } from 'util';
 
 
 @Component({
@@ -71,7 +72,7 @@ export class JigsawComponent implements OnInit {
 
   @HostListener('dragenter', ['$event'])
   @HostListener('dragover', ['$event'])
-  public onDragOver(event: DragEvent) {
+  public onDragOver(event: DragEvent, theid: string) {
     if (this.isDropped) {
       this.xOffset = event.offsetX;
       this.yOffset = event.offsetY;
@@ -82,11 +83,12 @@ export class JigsawComponent implements OnInit {
 
   @HostListener('dragend', ['$event'])
   public onDrop(event: DragEvent) {
+    const idAttr = event.srcElement.id;
     this.isDropped = true;
     const canvas: HTMLCanvasElement = this.canvasRef.nativeElement;
     const canvasLocation = canvas.getBoundingClientRect();
     const context = canvas.getContext('2d');
-    const img = <HTMLImageElement>document.getElementById('ddd');
+    const img = <HTMLImageElement>document.getElementById(idAttr);
     img.style.display = 'none';
     context.drawImage(img, event.x - canvasLocation.left - this.xOffset, event.y - canvasLocation.top - this.yOffset);
     this.InhibitDefaultBehaviour(event);
