@@ -1,6 +1,6 @@
 import { Guess } from './dtos/guess';
 import { Component, OnInit, HostListener } from '@angular/core';
-import { Peg } from './dtos/pegs';
+import { Piece } from './dtos/piece';
 import { SSL_OP_SSLREF2_REUSE_CERT_TYPE_BUG } from 'constants';
 import { forEach } from '@angular/router/src/utils/collection';
 import { IconSet } from './dtos/iconSet';
@@ -12,8 +12,8 @@ import { IconSet } from './dtos/iconSet';
   styleUrls: ['./decoder.component.css']
 })
 export class DecoderComponent {
-  public target: Peg[] = [];
-  public src: Peg[] = [];
+  public target: Piece[] = [];
+  public src: Piece[] = [];
 
   public greenTick = 'assets/images/greentick.png';
   public amberTick = 'assets/images/ambertick.png';
@@ -64,11 +64,11 @@ export class DecoderComponent {
     let basePath = 'assets/images/' + this.iconSetDirectory +  '/src';
     this.src = [];
     for (let i = 0; i < this.sourceLength; ++i) {
-      let peg: Peg = {
+      const piece: Piece = {
         id: 'src' + i.toString(),
         filePath: basePath + i.toString() + '.png'
-      }
-      this.src.push(peg);
+      };
+      this.src.push(piece);
     }
   }
 
@@ -86,11 +86,11 @@ export class DecoderComponent {
   resetTarget() {
     this.target = [];
     for (let i = 0; i < this.solutionLength; ++i) {
-      const peg: Peg = {
+      const piece: Piece = {
         id: 'target' + i.toString(),
         filePath: this.getBlankImage()
       };
-      this.target.push(peg);
+      this.target.push(piece);
     }
   }
 
@@ -152,7 +152,7 @@ export class DecoderComponent {
 
   public targetImageClicked(targetId: string) {
     if (this.gameComplete) { return; }
-    let targetIndex = this.getTargetIndex(targetId);
+    const targetIndex = this.getTargetIndex(targetId);
     this.guess.srcIndexes[targetIndex] = null;
     this.target[targetIndex].filePath = this.getBlankImage();
   }

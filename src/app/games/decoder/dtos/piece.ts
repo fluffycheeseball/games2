@@ -1,4 +1,4 @@
-export interface Peg {
+export interface Piece {
     filePath: string;
     id: string;
 }

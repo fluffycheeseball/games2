@@ -1,2 +1,9 @@
 <h1>jigsaw</h1>
-<canvas #layout class="jigsaw-canvas" width="350" height="350"></canvas>
+<canvas #mycanvas class="jigsaw-canvas" width="500" height="500" (onDrop)="onDrop($event)">
+<!-- <div *ngFor="let piece of pieces">
+        <img src={{piece.filePath}} id={{piece.id}} [draggable]="true" (ondragstart)="onDragStart($event)"         >
+</div> -->
+
+
+</canvas>
+<img src= "assets/images/jigsaw/img1.png" id="ddd" [draggable]="true" (ondragstart)="onDragStart($event)" >
