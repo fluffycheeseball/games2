@@ -1,3 +1,5 @@
+import { JigsawPuzzle } from './../decoder/dtos/jigsaw-puzzle';
+import { JigsawService } from './../../services/jigsaw.services';
 import { Piece } from './../decoder/dtos/piece';
 import { Component, OnInit, HostListener } from '@angular/core';
 import { ViewChild } from '@angular/core';
@@ -15,32 +17,50 @@ export class JigsawComponent implements OnInit {
 
   public pieces: Piece[] = [];
   public iconSetDirectory = 'jigsaw';
-  public imgWidth = 100;
-  public imgHeight = 133;
-  public puzzleWidth = 2;
-  public puzzleHeight = 2;
+  public jigsawPuzzle: JigsawPuzzle = new JigsawPuzzle();
   public isDropped = true;
   public xOffset = 0;
   public yOffset = 0;
-  public tStyle = '';
+  constructor(private jigsawService: JigsawService) {
 
-  constructor() {
-    this.resetSource();
   }
 
   resetSource() {
-    const basePath = 'assets/images/' + this.iconSetDirectory + '/img';
+    const basePath = 'assets/images/' + this.iconSetDirectory;
+    const settingsFilePath = basePath + '/puzzle.json';
+    this.jigsawService.getJigsawPuzzleSettingsFromFile(settingsFilePath).subscribe(
+      res => {
+        console.log(res);
+        this.jigsawPuzzle = new JigsawPuzzle();
+        this.jigsawPuzzle.puzzleWidth = res.puzzleWidth;
+        this.jigsawPuzzle.puzzleHeight = res.puzzleHeight;
+        this.jigsawPuzzle.pieceWidth = res.pieceWidth;
+        this.jigsawPuzzle.pieceHeight = res.pieceHeight;
+        console.log(this.jigsawPuzzle);
+        this.setPieces(basePath);
+      }
+    );
+  }
+
+  public setPieces(basePath: string) {
+    console.log('setPieces');
     this.pieces = [];
-    const numPieces = this.puzzleWidth * this.puzzleHeight;
-    for (let i = 0; i < numPieces; ++i) {
-      const piece: Piece = {
-        id: 'img' + i.toString(),
-        filePath: basePath + i.toString() + '.png'
-      };
-      this.pieces.push(piece);
+    console.log(this.jigsawPuzzle.puzzleWidth);
+    console.log(this.jigsawPuzzle.puzzleHeight);
+     for (let i = 0; i < this.jigsawPuzzle.puzzleWidth; ++i) {
+      for (let j = 0; j < this.jigsawPuzzle.puzzleHeight; ++j) {
+        const id = 'img' + ('000' + i).slice(-3) + '_' + ('000' + j).slice(-3);
+        console.log(id);
+        const piece: Piece = {
+          id: id,
+          filePath: basePath + '/' + id + '.png'
+        };
+        this.pieces.push(piece);
+      }
     }
   }
   ngOnInit() {
+    this.resetSource();
   }
 
   locked(id: string): boolean {
@@ -94,7 +114,7 @@ export class JigsawComponent implements OnInit {
     this.InhibitDefaultBehaviour(event);
   }
 
-  InhibitDefaultBehaviour(event:Event) {
+  InhibitDefaultBehaviour(event: Event) {
     event.stopPropagation();
     event.preventDefault();
   }
