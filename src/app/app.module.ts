@@ -6,6 +6,7 @@ import { DecoderComponent } from './games/decoder/decoder.component';
 import { BrowserModule } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 import {Routes, RouterModule} from '@angular/router';
+import { HttpModule } from '@angular/http';
 
 import { AppComponent } from './app.component';
 import { CommonModule } from '@angular/common';
@@ -26,6 +27,7 @@ const appRoutes: Routes = [
   imports: [
     BrowserModule,
     CommonModule ,
+    HttpModule,
     GamesModule,
     Angular2FontawesomeModule ,
     RouterModule.forRoot(
