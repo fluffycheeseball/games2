@@ -1,4 +1,4 @@
-import { JigsawPuzzle } from './../decoder/dtos/jigsaw-puzzle';
+import { JigsawPuzzle } from './dtos/jigsaw-puzzle';
 import { JigsawService } from './../../services/jigsaw.services';
 import { Piece } from './../decoder/dtos/piece';
 import { Component, OnInit, HostListener } from '@angular/core';
@@ -43,14 +43,10 @@ export class JigsawComponent implements OnInit {
   }
 
   public setPieces(basePath: string) {
-    console.log('setPieces');
     this.pieces = [];
-    console.log(this.jigsawPuzzle.puzzleWidth);
-    console.log(this.jigsawPuzzle.puzzleHeight);
      for (let i = 0; i < this.jigsawPuzzle.puzzleWidth; ++i) {
       for (let j = 0; j < this.jigsawPuzzle.puzzleHeight; ++j) {
         const id = 'img' + ('000' + i).slice(-3) + '_' + ('000' + j).slice(-3);
-        console.log(id);
         const piece: Piece = {
           id: id,
           filePath: basePath + '/' + id + '.png'
@@ -67,28 +63,6 @@ export class JigsawComponent implements OnInit {
     return false;
   }
 
-  // ngAfterViewInit() {
-  //    const canvas = this.canvasRef.nativeElement;
-  //    const context = canvas.getContext('2d');
-
-  //    let counter = 0;
-  //    for (let i = 0; i < this.puzzleWidth; ++i) {
-  //      for (let j = 0; j < this.puzzleHeight; ++j) {
-  //      const source = new Image();
-  //      source.crossOrigin = 'Anonymous';
-  //      source.draggable = true;
-  //      const img = <HTMLImageElement>document.getElementById(this.pieces[counter].id);
-  //      source.onload = () => {
-  //       // context.drawImage(img, (10 * i) + (i * this.imgWidth), (10 * j) + (j * this.imgHeight));
-  //    };
-  //      source.src = this.pieces[counter].filePath;
-
-  //      console.log('init: ' + img.id);
-  //      console.log('is draggable: ' + img.draggable);
-  //      counter++;
-  //    }
-  //    }
-  // }
 
   @HostListener('dragenter', ['$event'])
   @HostListener('dragover', ['$event'])

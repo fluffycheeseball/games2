@@ -1,8 +1,8 @@
-import { JigsawPuzzle } from './../games/decoder/dtos/jigsaw-puzzle';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
 import { Http, Response } from '@angular/http';
 import 'rxjs/add/operator/map';
+import { JigsawPuzzle } from '../games/jigsaw/dtos/jigsaw-puzzle';
 
 
 @Injectable()
