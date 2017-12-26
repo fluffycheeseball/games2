@@ -1,5 +1,7 @@
+import { Piece } from "../../decoder/dtos/piece";
 
-export interface JigsawPiece {
+
+export interface JigsawPiece extends Piece {
    locationCoords: number[];
    GridPosition: number[];
 }
