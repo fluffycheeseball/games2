@@ -1,3 +1,5 @@
+import { Utils } from './../../Utils/utils';
+import { JigsawPiece } from './dtos/jigsawpiece';
 import { JigsawPuzzle } from './dtos/jigsaw-puzzle';
 import { JigsawService } from './../../services/jigsaw.services';
 import { Piece } from './../decoder/dtos/piece';
@@ -15,12 +17,13 @@ import { log } from 'util';
 export class JigsawComponent implements OnInit {
   @ViewChild('mycanvas') canvasRef: ElementRef;
 
-  public pieces: Piece[] = [];
+  public pieces: JigsawPiece[] = [];
   public iconSetDirectory = 'jigsaw';
   public jigsawPuzzle: JigsawPuzzle = new JigsawPuzzle();
   public isDropped = true;
-  public xOffset = 0;
-  public yOffset = 0;
+  public mouseRelativeToImgX = 0;
+  public mouseRelativeToImgY = 0;
+  public errorMargin = 40;
   constructor(private jigsawService: JigsawService) {
 
   }
@@ -30,13 +33,7 @@ export class JigsawComponent implements OnInit {
     const settingsFilePath = basePath + '/puzzle.json';
     this.jigsawService.getJigsawPuzzleSettingsFromFile(settingsFilePath).subscribe(
       res => {
-        console.log(res);
-        this.jigsawPuzzle = new JigsawPuzzle();
-        this.jigsawPuzzle.puzzleWidth = res.puzzleWidth;
-        this.jigsawPuzzle.puzzleHeight = res.puzzleHeight;
-        this.jigsawPuzzle.pieceWidth = res.pieceWidth;
-        this.jigsawPuzzle.pieceHeight = res.pieceHeight;
-        console.log(this.jigsawPuzzle);
+        this.jigsawPuzzle = res;
         this.setPieces(basePath);
       }
     );
@@ -44,12 +41,16 @@ export class JigsawComponent implements OnInit {
 
   public setPieces(basePath: string) {
     this.pieces = [];
-     for (let i = 0; i < this.jigsawPuzzle.puzzleWidth; ++i) {
+    for (let i = 0; i < this.jigsawPuzzle.puzzleWidth; ++i) {
       for (let j = 0; j < this.jigsawPuzzle.puzzleHeight; ++j) {
+        const locX = i * this.jigsawPuzzle.pieceWidth;
+        const locY = j * this.jigsawPuzzle.pieceHeight;
         const id = 'img' + ('000' + i).slice(-3) + '_' + ('000' + j).slice(-3);
-        const piece: Piece = {
+        const piece: JigsawPiece = {
           id: id,
-          filePath: basePath + '/' + id + '.png'
+          filePath: basePath + '/' + id + '.png',
+          locationCoords: [locX, locY],
+          GridPosition: [i, j]
         };
         this.pieces.push(piece);
       }
@@ -68,8 +69,10 @@ export class JigsawComponent implements OnInit {
   @HostListener('dragover', ['$event'])
   public onDragOver(event: DragEvent, theid: string) {
     if (this.isDropped) {
-      this.xOffset = event.offsetX;
-      this.yOffset = event.offsetY;
+      const img = <HTMLImageElement>document.getElementById(event.srcElement.id);
+      const imgLocation = img.getBoundingClientRect();
+      this.mouseRelativeToImgX = event.clientX - imgLocation.left;
+      this.mouseRelativeToImgY = event.clientY - imgLocation.top;
       this.isDropped = false;
     }
     this.InhibitDefaultBehaviour(event);
@@ -77,16 +80,37 @@ export class JigsawComponent implements OnInit {
 
   @HostListener('dragend', ['$event'])
   public onDrop(event: DragEvent) {
-    const idAttr = event.srcElement.id;
     this.isDropped = true;
+    if (this.cannotBeDroppedHere(event)) {
+      return;
+    }
+    const idAttr = event.srcElement.id;
     const canvas: HTMLCanvasElement = this.canvasRef.nativeElement;
-    const canvasLocation = canvas.getBoundingClientRect();
+    const piece = this.getPieceById(idAttr);
     const context = canvas.getContext('2d');
     const img = <HTMLImageElement>document.getElementById(idAttr);
     img.style.display = 'none';
-    context.drawImage(img, event.x - canvasLocation.left - this.xOffset, event.y - canvasLocation.top - this.yOffset);
+    context.drawImage(img, piece.locationCoords[0], piece.locationCoords[1]);
     this.InhibitDefaultBehaviour(event);
   }
+
+  cannotBeDroppedHere(event: DragEvent): boolean {
+    const canvas: HTMLCanvasElement = this.canvasRef.nativeElement;
+    const canvasLocation = canvas.getBoundingClientRect();
+    const piece = this.getPieceById(event.srcElement.id);
+    const relLocX = event.x - canvasLocation.left - this.mouseRelativeToImgX;
+    const relLocY = event.y - canvasLocation.top - this.mouseRelativeToImgY;
+    if (Math.abs(relLocX - piece.locationCoords[0]) > this.errorMargin
+      || Math.abs(relLocY - piece.locationCoords[1]) > this.errorMargin) {
+      return true;
+    }
+    return false;
+  }
+
+  getPieceById(id: string): JigsawPiece {
+    return this.pieces[this.pieces.findIndex(p => p.id === id)];
+  }
+
 
   InhibitDefaultBehaviour(event: Event) {
     event.stopPropagation();
