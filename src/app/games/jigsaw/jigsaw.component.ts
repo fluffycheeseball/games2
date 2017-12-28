@@ -8,6 +8,10 @@ import { ViewChild } from '@angular/core';
 import { ElementRef } from '@angular/core';
 import { log } from 'util';
 
+import 'fabric';
+import { read } from 'fs';
+declare const fabric: any;
+
 
 @Component({
   selector: 'app-jigsaw',
@@ -24,8 +28,56 @@ export class JigsawComponent implements OnInit {
   public mouseRelativeToImgX = 0;
   public mouseRelativeToImgY = 0;
   public errorMargin = 40;
+
+
+  private canvas: any;
+  private props: any = {
+    canvasFill: '#ffffff',
+    canvasImage: '',
+    id: null,
+    opacity: null,
+    fill: null,
+    fontSize: null,
+    lineHeight: null,
+    charSpacing: null,
+    fontWeight: null,
+    fontStyle: null,
+    textAlign: null,
+    fontFamily: null,
+    TextDecoration: ''
+  };
+  private size: any = {
+    width: 500,
+    height: 800
+  };
+
   constructor(private jigsawService: JigsawService) {
 
+
+  }
+
+  private getCoordsString(originX: number, originY: number, curvyCoords: number[]): string {
+    let str = 'M ' + originX.toString() + ', ' + originY.toString() + ',';
+    for (let i = 0; i < curvyCoords.length; i++) {
+      const offset = i % 2 === 0 ? originX : originY;
+      if (i % 6 === 0) {
+        str = str + ' C ';
+      }
+      str = str + (offset + curvyCoords[i]).toString();
+      if (i < curvyCoords.length - 1) {
+        str = str + ',';
+      }
+    }
+    return str;
+  }
+
+  public addCurves() {
+    const left = 50;
+    const top = 200;
+    const path = this.getCoordsString(left, top, this.jigsawService.middlePiece);
+    const line = new fabric.Path(path, { fill: '', stroke: 'black', objectCaching: false });
+    line.selectable = false;
+    this.canvas.add(line);
   }
 
   resetSource() {
@@ -57,7 +109,17 @@ export class JigsawComponent implements OnInit {
     }
   }
   ngOnInit() {
-    this.resetSource();
+    // this.resetSource();
+    //setup front side canvas
+    this.canvas = new fabric.Canvas('canvas', {
+      hoverCursor: 'pointer',
+      selection: true,
+      selectionBorderColor: 'blue',
+      backgroundColor: 'rgb(100,100,200)',
+      selectionLineWidth: 0
+    });
+    this.canvas.setWidth(this.size.width);
+    this.canvas.setHeight(this.size.height);
   }
 
   locked(id: string): boolean {

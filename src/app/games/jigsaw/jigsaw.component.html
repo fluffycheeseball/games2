@@ -1,6 +1,4 @@
 <h1>jigsaw</h1>
-<canvas #mycanvas class="jigsaw-canvas" width="500" height="500" (onDrop)="onDrop($event)"></canvas>
-<br/>
-<span *ngFor="let piece of pieces">
-        <img class="ig" src={{piece.filePath}} id={{piece.id}} [draggable]="true" (ondragstart)="onDragStart($event, piece.id)">
-</span>
+
+<button (click)="addCurves()">add curves</button>
+<canvas id="canvas"></canvas>
