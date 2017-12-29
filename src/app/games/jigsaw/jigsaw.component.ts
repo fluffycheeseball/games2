@@ -56,7 +56,8 @@ export class JigsawComponent implements OnInit {
 
   }
 
-  private getCoordsString(originX: number, originY: number, curvyCoords: number[]): string {
+  private getCoordsString(originX: number, originY: number): string {
+    let curvyCoords = this.jigsawService.middlePiece;
     let str = 'M ' + originX.toString() + ', ' + originY.toString() + ',';
     for (let i = 0; i < curvyCoords.length; i++) {
       const offset = i % 2 === 0 ? originX : originY;
@@ -68,16 +69,44 @@ export class JigsawComponent implements OnInit {
         str = str + ',';
       }
     }
+    // close the path
+    str = str + ' z ';
     return str;
   }
+
+  public addImage() {
+    const pathstr = this.getCoordsString(0, 0);
+    const mypath = new fabric.Path(pathstr);
+   // let context = this.canvas.getContext('2d');
+    fabric.Image.fromURL('assets/images/pingu.png',
+  img => {
+    img.set({left:50, 
+      top:50,
+      clipTo: function (ctx) {
+       // ctx.arc(0, 0, 40, 0, Math.PI * 2, true);
+       mypath._render(ctx);
+      }
+    });
+   // img.clipTo = ctx => {path.render(ctx); };
+    this.canvas.add(img);
+  });
+
+  }
+
+
 
   public addCurves() {
     const left = 50;
     const top = 200;
-    const path = this.getCoordsString(left, top, this.jigsawService.middlePiece);
-    const line = new fabric.Path(path, { fill: '', stroke: 'black', objectCaching: false });
-    line.selectable = false;
+    const path = this.getCoordsString(left, top);
+    const line = new fabric.Path(path, { fill: 'red', stroke: 'black', objectCaching: false });
+    line.selectable = true;
+    line.hasBorder = false;
+    line.hasControls = false;
     this.canvas.add(line);
+
+
+
   }
 
   resetSource() {
@@ -121,11 +150,6 @@ export class JigsawComponent implements OnInit {
     this.canvas.setWidth(this.size.width);
     this.canvas.setHeight(this.size.height);
   }
-
-  locked(id: string): boolean {
-    return false;
-  }
-
 
   @HostListener('dragenter', ['$event'])
   @HostListener('dragover', ['$event'])
