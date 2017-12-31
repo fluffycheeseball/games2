@@ -56,31 +56,12 @@ export class JigsawComponent implements OnInit {
   constructor(private jigsawService: JigsawService) {
   }
 
-  private getCoordsString(originX: number, originY: number): string {
-    const curvyCoords = this.jigsawService.middlePiece1;
-    let str = 'M ' + originX.toString() + ', ' + originY.toString() + ',';
-    for (let i = 0; i < curvyCoords.length; i++) {
-      const offset = i % 2 === 0 ? originX : originY;
-      if (i % 6 === 0) {
-        str = str + ' C ';
-      }
-      str = str + (offset + curvyCoords[i]).toString();
-      if (i < curvyCoords.length - 1) {
-        str = str + ',';
-      }
-    }
-    // close the path
-    str = str + ' z ';
-    return str;
-  }
-
   public addImages() {
-     for (let r = 0; r < this.pieces.length; r++) {
-
-    //for (let r = 0; r < 2; r++) {
+    for (let r = 0; r < this.pieces.length; r++) {
       const mypath = new fabric.Path(this.pieces[r].pattern);
-      mypath.pathOffset.y = ((3 - this.pieces[r].GridPosition[1]) / 3) * 150;
-      mypath.pathOffset.x = (((3 - this.pieces[r].GridPosition[0]) / 3) * 150);
+      mypath.pathOffset.x = 150 + (this.pieces[r].GridPosition[1] * -1 * this.jigsawPuzzle.pieceWidth);
+      mypath.pathOffset.y = 150 + (this.pieces[r].GridPosition[0] * -1 * this.jigsawPuzzle.pieceHeight);
+
       console.log(mypath);
       fabric.Image.fromURL('assets/images/pingu.png',
         img => {
@@ -109,22 +90,19 @@ export class JigsawComponent implements OnInit {
   }
 
   public setPieces(basePath: string) {
-    console.log(this.jigsawPuzzle)
     this.pieces = [];
-    for (let i = 0; i < this.jigsawPuzzle.puzzleWidth; ++i) {
-      for (let j = 0; j < this.jigsawPuzzle.puzzleHeight; ++j) {
-        const locX = i * this.jigsawPuzzle.pieceWidth;
-        const locY = j * this.jigsawPuzzle.pieceHeight;
-        const id = 'img' + ('000' + i).slice(-3) + '_' + ('000' + j).slice(-3);
+    for (let col = 0; col < this.jigsawPuzzle.puzzleWidth; ++col) {
+      for (let row = 0; row < this.jigsawPuzzle.puzzleHeight; ++row) {
+        const locX = col * this.jigsawPuzzle.pieceWidth;
+        const locY = row * this.jigsawPuzzle.pieceHeight;
+        const id = 'img' + ('000' + col).slice(-3) + '_' + ('000' + row).slice(-3);
         const piece: JigsawPiece = {
           id: id,
           filePath: basePath + '/' + id + '.png',
           locationCoords: [locX, locY],
-          GridPosition: [i, j],
-          pattern: this.getPath(i, j, locX, locY)
+          GridPosition: [col, row],
+          pattern: this.getPath(col, row, locX, locY)
         };
-        //  console.log('grid: ' + i + ' ' + j);
-        //  console.log('pattern: ' + piece.pattern);
         this.pieces.push(piece);
       }
     }
@@ -139,81 +117,8 @@ export class JigsawComponent implements OnInit {
     path = path + this.getSidePath('bottom', 100, 100, this.getSideShape('bottom', row, col));
     path = path + this.getSidePath('left', 0, 100, this.getSideShape('left', row, col));
 
-    if (row === 0 && col === 0) {
-      // console.log('row: ' + row);
-      // console.log('col: ' + col);
-      // console.log('top: ' + this.getSideShape('top', row, col));
-      // console.log('right: ' + this.getSideShape('right', row, col));
-      // console.log('bottom: ' + this.getSideShape('bottom', row, col));
-      // console.log('left: ' + this.getSideShape('left', row, col));
-      // console.log(path);
-    }
     return path + ' z';
   }
-
-  public drawlines() {
-    let T = 0;
-    let L = 0;
-    let R = 100;
-    const B = 100;
-    let s = 'M ' + L + ' ' + B;
-    let coords: number[];
-
-    // left side of piece
-    coords = this.getPathCoords(this.jigsawService.shapeLeftXUpwards, this.jigsawService.shapeLeftYUpwards, L, B);
-    s = s + this.coordsToString(coords);
-   // this.drawLine(s);
-    s = 'M ' + L + ' ' + B;
-    coords = this.getPathCoords(this.jigsawService.shapeRightXUpwards, this.jigsawService.shapeRightYUpwards, L, B);
-    s = s + this.coordsToString(coords);
-  //  this.drawLine(s);
-
-    // right side of piece
-    s = 'M ' + R + ' ' + T;
-    coords = this.getPathCoords(this.jigsawService.shapeLeftXDownwards, this.jigsawService.shapeLeftYDownwards, R, T);
-    s = s + this.coordsToString(coords);
-  // this.drawLine(s);
-
- s = 'M ' + R + ' ' + T;
- coords = this.getPathCoords(this.jigsawService.shapeRightXDownwards, this.jigsawService.shapeRightYDownwards, R, T);
- s = s + this.coordsToString(coords);
- // this.drawLine(s);
-
-  //top side
-  s = 'M ' + L + ' ' + T;
-  coords = this.getPathCoords(this.jigsawService.shapeUpXLTR, this.jigsawService.shapeUpYLTR, L, T);
-  s = s + this.coordsToString(coords);
-  // this.drawLine(s);
-
-  s = 'M ' + L + ' ' + T;
-  coords = this.getPathCoords(this.jigsawService.shapeDownXLTR, this.jigsawService.shapeDownYLTR, L, T);
-  s = s + this.coordsToString(coords);
-   this.drawLine(s);
-
-   //bottom side
-   s = 'M ' + R + ' ' + B;
-   coords = this.getPathCoords(this.jigsawService.shapeDownXRTL, this.jigsawService.shapeDownYRTL, R, B);
-   s = s + this.coordsToString(coords);
-   // this.drawLine(s);
-
-    s = 'M ' + R + ' ' + B;
-    coords = this.getPathCoords(this.jigsawService.shapeUpXRTL, this.jigsawService.shapeUpYRTL, R, B);
-    s = s + this.coordsToString(coords);
-     this.drawLine(s);
-
-
-
-  }
-
-  private drawLine(s:string) {
-    console.log(s);
-    const line = new fabric.Path(s, { fill: '', stroke: 'black', objectCaching: false });
-    line.selectable = true;
-    line.hasBorder = false;
-    line.hasControls = false;
-    this.canvas.add(line);
-  }
-
   public getSidePath(side: string, originX: number, originY: number, sideShape: string): string {
     if (sideShape === 'straight') {
       return this.GetStraightSidePath(side, originX, originY);
