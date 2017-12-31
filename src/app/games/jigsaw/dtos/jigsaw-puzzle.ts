@@ -3,5 +3,8 @@ export class JigsawPuzzle {
     public puzzleHeight: number;
     public pieceWidth: number;
     public pieceHeight: number;
+    public verticals: string[];
+    public horizontals: string[];
+    public imageUrl: string;
 }
 
