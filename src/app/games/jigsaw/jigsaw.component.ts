@@ -1,3 +1,4 @@
+import { ROW, COLUMN } from './../constants';
 import { Utils } from './../../Utils/utils';
 import { JigsawPiece } from './dtos/jigsawpiece';
 import { JigsawPuzzle } from './dtos/jigsaw-puzzle';
@@ -22,7 +23,6 @@ declare const fabric: any;
 })
 export class JigsawComponent implements OnInit {
   @ViewChild('mycanvas') canvasRef: ElementRef;
-
   public pieces: JigsawPiece[] = [];
   public iconSetDirectory = 'jigsaw';
   public jigsawPuzzle: JigsawPuzzle = new JigsawPuzzle();
@@ -87,7 +87,7 @@ export class JigsawComponent implements OnInit {
         });
     }
   }
-
+  
   resetSource() {
     const basePath = 'assets/images/' + this.iconSetDirectory;
     const settingsFilePath = basePath + '/puzzle.json';
@@ -101,26 +101,43 @@ export class JigsawComponent implements OnInit {
 
   public setPieces(basePath: string) {
     this.pieces = [];
-    for (let col = 0; col < this.jigsawPuzzle.puzzleWidth; ++col) {
-      for (let row = 0; row < this.jigsawPuzzle.puzzleHeight; ++row) {
-        const locX = col * this.jigsawPuzzle.pieceWidth;
-        const locY = row * this.jigsawPuzzle.pieceHeight;
+    const spacer = 0;
+
+    for (let row = 0; row < this.jigsawPuzzle.puzzleHeight; ++row) {
+      for (let col = 0; col < this.jigsawPuzzle.puzzleWidth; ++col) {
+        const intialX = (col * (this.jigsawPuzzle.pieceWidth + spacer)) + 0;
+        const initialY = (row * (this.jigsawPuzzle.pieceHeight + spacer)) + 0;
         const id = 'img' + ('000' + col).slice(-3) + '_' + ('000' + row).slice(-3);
         const piece: JigsawPiece = {
           id: id,
           filePath: basePath + '/' + id + '.png',
-          locationCoords: [locX, locY],
-          GridPosition: [col, row],
-          pattern: this.getPath(col, row, locX, locY)
+          topleft: this.getImageOffsetForPiece(row, col),
+          GridPosition: [row, col],
+          pattern: this.getPath(row, col, intialX, initialY)
         };
         this.pieces.push(piece);
       }
     }
   }
 
+  public getImageOffsetForPiece(row: number, col: number): number[] {
+    let x = col * 220;
+    let y = row * 220;
+    // if(row === 1) {
+    //   y += 10;
+    // }
+    // if (row === 2) {
+    //   y += 10;
+    // }
+    // if(col === 0) {
+    //   x += 0;
+    // }
+    return  [x, y];
+  }
+
   public getPath(row: number, col: number, left: number, top: number): string {
-    let path = 'M ' + left + ' '  + top;
-    path = path + this.getSidePath('top', left ,top, this.getSideShape('top', row, col));
+    let path = 'M ' + left + ' ' + top;
+    path = path + this.getSidePath('top', left, top, this.getSideShape('top', row, col));
     path = path + this.getSidePath('right', left, top, this.getSideShape('right', row, col));
     path = path + this.getSidePath('bottom', left, top, this.getSideShape('bottom', row, col));
     path = path + this.getSidePath('left', left, top, this.getSideShape('left', row, col));
@@ -132,7 +149,7 @@ export class JigsawComponent implements OnInit {
       return this.GetStraightSidePath(side, left, top);
     }
     const right = left + this.jigsawPuzzle.pieceWidth;
-    const bottom = top + this.jigsawPuzzle.pieceWidth ;
+    const bottom = top + this.jigsawPuzzle.pieceWidth;
     let coords: number[];
     switch (side) {
       case 'top': {
@@ -180,7 +197,7 @@ export class JigsawComponent implements OnInit {
 
   public GetStraightSidePath(side: string, left: number, top: number): string {
     const right = left + this.jigsawPuzzle.pieceWidth;
-    const bottom = top + this.jigsawPuzzle.pieceWidth ;
+    const bottom = top + this.jigsawPuzzle.pieceWidth;
     if (side === 'top') {
       return ' L ' + right + ' ' + top;
     }

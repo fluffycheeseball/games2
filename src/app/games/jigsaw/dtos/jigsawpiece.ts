@@ -2,7 +2,7 @@ import { Piece } from "../../decoder/dtos/piece";
 
 
 export interface JigsawPiece extends Piece {
-   locationCoords: number[];
+   topleft: number[];
    GridPosition: number[];
    pattern: string;
 }
