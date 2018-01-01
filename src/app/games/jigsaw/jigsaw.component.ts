@@ -57,22 +57,38 @@ export class JigsawComponent implements OnInit {
   }
 
   public addImages() {
-    for (let r = 0; r < this.pieces.length; r++) {
-      const mypath = new fabric.Path(this.pieces[r].pattern);
-      mypath.pathOffset.x = 150 + (this.pieces[r].GridPosition[1] * -1 * this.jigsawPuzzle.pieceWidth);
-      mypath.pathOffset.y = 150 + (this.pieces[r].GridPosition[0] * -1 * this.jigsawPuzzle.pieceHeight);
 
-      console.log(mypath);
+  //  mypath.pathOffset.x = 150 + (this.pieces[r].GridPosition[1] * -1 * this.jigsawPuzzle.pieceWidth);
+ //   mypath.pathOffset.y = 150 + (this.pieces[r].GridPosition[0] * -1 * this.jigsawPuzzle.pieceHeight);
+    for (let r = 0; r < this.pieces.length; r++) {
+  //    for (let r = 0; r < 2; r++) {
+    let x = (this.pieces[r].GridPosition[1] * 200);
+    let y = (this.pieces[r].GridPosition[0] * 200);
+      const mypath = new fabric.Path(this.pieces[r].pattern);
+      mypath.hasControls = false;
+      mypath.hasBorders = false;
+   //   console.log(mypath);
       fabric.Image.fromURL('assets/images/pingu.png',
         img => {
-          img.scale(1).set({
-            left: 100,
-            top: 100,
-            clipTo: function (ctx) {
-              mypath._render(ctx);
-            }
+          const patternSourceCanvas = new fabric.StaticCanvas();
+          patternSourceCanvas.add(img);
+       //   console.log(this.pieces[r].GridPosition[0] + ' ' + this.pieces[r].GridPosition[1]);
+
+       //   console.log('offset: ' + x + ' ' + y);
+          const pattern = new fabric.Pattern({
+            offsetX: x,
+            offsetY: y,
+              source: function () {
+              patternSourceCanvas.setDimensions({
+                width: img.getWidth() + 0,
+                height: img.getHeight() + 0
+              });
+              return patternSourceCanvas.getElement();
+            },
           });
-          this.canvas.add(img);
+          mypath.fill = pattern;
+    //      console.log(pattern);
+          this.canvas.add(mypath);
         });
     }
   }
@@ -123,10 +139,10 @@ export class JigsawComponent implements OnInit {
     if (sideShape === 'straight') {
       return this.GetStraightSidePath(side, originX, originY);
     }
-    const top = 0;
+    const top = 0 ;
     const left = 0;
     const right = 100;
-    const bottom = 100;
+    const bottom = 100 ;
     let coords: number[];
     switch (side) {
       case 'top': {
