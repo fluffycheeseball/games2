@@ -57,11 +57,7 @@ export class JigsawComponent implements OnInit {
   }
 
   public addImages() {
-
-  //  mypath.pathOffset.x = 150 + (this.pieces[r].GridPosition[1] * -1 * this.jigsawPuzzle.pieceWidth);
- //   mypath.pathOffset.y = 150 + (this.pieces[r].GridPosition[0] * -1 * this.jigsawPuzzle.pieceHeight);
     for (let r = 0; r < this.pieces.length; r++) {
-  //    for (let r = 0; r < 2; r++) {
     let x = (this.pieces[r].GridPosition[1] * 200);
     let y = (this.pieces[r].GridPosition[0] * 200);
       const mypath = new fabric.Path(this.pieces[r].pattern);
@@ -73,7 +69,6 @@ export class JigsawComponent implements OnInit {
           const patternSourceCanvas = new fabric.StaticCanvas();
           patternSourceCanvas.add(img);
        //   console.log(this.pieces[r].GridPosition[0] + ' ' + this.pieces[r].GridPosition[1]);
-
        //   console.log('offset: ' + x + ' ' + y);
           const pattern = new fabric.Pattern({
             offsetX: x,
@@ -102,7 +97,6 @@ export class JigsawComponent implements OnInit {
         this.setPieces(basePath);
       }
     );
-
   }
 
   public setPieces(basePath: string) {
@@ -124,25 +118,21 @@ export class JigsawComponent implements OnInit {
     }
   }
 
-  public getPath(row: number, col: number, originX: number, originY: number): string {
-    let path = 'M 0 0';
-
-    path = path + this.getSidePath('top', 0, 0, this.getSideShape('top', row, col));
-
-    path = path + this.getSidePath('right', 100, 0, this.getSideShape('right', row, col));
-    path = path + this.getSidePath('bottom', 100, 100, this.getSideShape('bottom', row, col));
-    path = path + this.getSidePath('left', 0, 100, this.getSideShape('left', row, col));
+  public getPath(row: number, col: number, left: number, top: number): string {
+    let path = 'M ' + left + ' '  + top;
+    path = path + this.getSidePath('top', left ,top, this.getSideShape('top', row, col));
+    path = path + this.getSidePath('right', left, top, this.getSideShape('right', row, col));
+    path = path + this.getSidePath('bottom', left, top, this.getSideShape('bottom', row, col));
+    path = path + this.getSidePath('left', left, top, this.getSideShape('left', row, col));
 
     return path + ' z';
   }
-  public getSidePath(side: string, originX: number, originY: number, sideShape: string): string {
+  public getSidePath(side: string, left: number, top: number, sideShape: string): string {
     if (sideShape === 'straight') {
-      return this.GetStraightSidePath(side, originX, originY);
+      return this.GetStraightSidePath(side, left, top);
     }
-    const top = 0 ;
-    const left = 0;
-    const right = 100;
-    const bottom = 100 ;
+    const right = left + this.jigsawPuzzle.pieceWidth;
+    const bottom = top + this.jigsawPuzzle.pieceWidth ;
     let coords: number[];
     switch (side) {
       case 'top': {
@@ -188,18 +178,20 @@ export class JigsawComponent implements OnInit {
     return str;
   }
 
-  public GetStraightSidePath(side: string, originX: number, originY: number): string {
+  public GetStraightSidePath(side: string, left: number, top: number): string {
+    const right = left + this.jigsawPuzzle.pieceWidth;
+    const bottom = top + this.jigsawPuzzle.pieceWidth ;
     if (side === 'top') {
-      return ' L ' + (originX + this.jigsawPuzzle.pieceWidth) + ' ' + originY;
+      return ' L ' + right + ' ' + top;
     }
     if (side === 'bottom') {
-      return ' L ' + (originX - this.jigsawPuzzle.pieceWidth) + ' ' + originY;
+      return ' L ' + left + ' ' + bottom;
     }
     if (side === 'right') {
-      return ' L ' + (originX) + ' ' + (originY + this.jigsawPuzzle.pieceHeight);
+      return ' L ' + right + ' ' + bottom;
     }
     if (side === 'left') {
-      return ' L ' + (originX) + ' ' + (originY - this.jigsawPuzzle.pieceHeight);
+      return ' L ' + left + ' ' + top;
     }
     console.log('invalid side: ' + side);
     return '';
