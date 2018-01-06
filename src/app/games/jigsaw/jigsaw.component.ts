@@ -15,7 +15,6 @@ import { Console } from '@angular/core/src/console';
 import { PACKAGE_ROOT_URL } from '@angular/core/src/application_tokens';
 declare const fabric: any;
 
-
 @Component({
   selector: 'app-jigsaw',
   templateUrl: './jigsaw.component.html',
@@ -57,23 +56,26 @@ export class JigsawComponent implements OnInit {
   }
 
   public addImages() {
-    for (let r = 0; r < this.pieces.length; r++) {
-    let x = (this.pieces[r].GridPosition[1] * 200);
-    let y = (this.pieces[r].GridPosition[0] * 200);
+    // for (let r = 0; r < this.pieces.length; r++) {
+    for (let r = 0; r < 25; r++) {
+      //   console.log('row' + this.pieces[r].GridPosition[ROW] + 'column ' + this.pieces[r].GridPosition[COLUMN]);
+      let x = this.pieces[r].topleft[COLUMN];
+      let y = this.pieces[r].topleft[ROW];
+      //    console.log('x' + x + ' y ' + y);
       const mypath = new fabric.Path(this.pieces[r].pattern);
       mypath.hasControls = false;
       mypath.hasBorders = false;
-   //   console.log(mypath);
+      //   console.log(mypath);
       fabric.Image.fromURL('assets/images/pingu.png',
         img => {
           const patternSourceCanvas = new fabric.StaticCanvas();
           patternSourceCanvas.add(img);
-       //   console.log(this.pieces[r].GridPosition[0] + ' ' + this.pieces[r].GridPosition[1]);
-       //   console.log('offset: ' + x + ' ' + y);
+          //   console.log(this.pieces[r].GridPosition[0] + ' ' + this.pieces[r].GridPosition[1]);
+          //   console.log('offset: ' + x + ' ' + y);
           const pattern = new fabric.Pattern({
             offsetX: x,
             offsetY: y,
-              source: function () {
+            source: function () {
               patternSourceCanvas.setDimensions({
                 width: img.getWidth() + 0,
                 height: img.getHeight() + 0
@@ -82,21 +84,37 @@ export class JigsawComponent implements OnInit {
             },
           });
           mypath.fill = pattern;
-    //      console.log(pattern);
           this.canvas.add(mypath);
         });
     }
   }
-  
+
   resetSource() {
     const basePath = 'assets/images/' + this.iconSetDirectory;
     const settingsFilePath = basePath + '/puzzle.json';
     this.jigsawService.getJigsawPuzzleSettingsFromFile(settingsFilePath).subscribe(
       res => {
         this.jigsawPuzzle = res;
+        this.setNodules();
         this.setPieces(basePath);
       }
     );
+  }
+
+  public setNodules() {
+    this.jigsawPuzzle.horizontals = new Array();
+    this.jigsawPuzzle.verticals = new Array();
+
+    const numVerticalJoins = (this.jigsawPuzzle.puzzleWidth - 1) * this.jigsawPuzzle.puzzleHeight;
+    for (let col = 0; col < numVerticalJoins; col++) {
+      const noduleType = Utils.getRandomBoolean() === true ? 'left' : 'right';
+      this.jigsawPuzzle.verticals.push(noduleType);
+    }
+    const numHorizontalJoins = (this.jigsawPuzzle.puzzleHeight - 1) * this.jigsawPuzzle.puzzleWidth;
+    for (let row = 0; row < numHorizontalJoins; row++) {
+      const noduleType = Utils.getRandomBoolean() === true ? 'top' : 'bottom';
+      this.jigsawPuzzle.horizontals.push(noduleType);
+    }
   }
 
   public setPieces(basePath: string) {
@@ -121,18 +139,32 @@ export class JigsawComponent implements OnInit {
   }
 
   public getImageOffsetForPiece(row: number, col: number): number[] {
-    let x = col * 220;
-    let y = row * 220;
-    // if(row === 1) {
-    //   y += 10;
-    // }
-    // if (row === 2) {
-    //   y += 10;
-    // }
-    // if(col === 0) {
-    //   x += 0;
-    // }
-    return  [x, y];
+    const y = col === 0 ? 0 : (-100 * (col - 1)) - 80;
+
+    let x = row === 0 ? 0 : (-100 * (row - 1)) - 80;
+    if (row === 1) {
+      if (col === 1 || col === 4) {
+        x = ((row - 1) * 100) - 92;
+      }
+    }
+    if (row === 2) {
+      if (col === 2 || col === 4) {
+        x = ((row - 1) * 100) - 92;
+      }
+    }
+    if (row === 3) {
+      if (col === 2) {
+        x = ((row - 1) * 100) - 92;
+      }
+    }
+    if (row === 4) {
+      if (col === 0 || col === 1 || col === 4) {
+        x = ((row - 1) * 100) - 92;
+      }
+    }
+
+
+    return [x, y];
   }
 
   public getPath(row: number, col: number, left: number, top: number): string {
@@ -147,6 +179,9 @@ export class JigsawComponent implements OnInit {
   public getSidePath(side: string, left: number, top: number, sideShape: string): string {
     if (sideShape === 'straight') {
       return this.GetStraightSidePath(side, left, top);
+    }
+    if (sideShape === undefined) {
+      console.log('oops');
     }
     const right = left + this.jigsawPuzzle.pieceWidth;
     const bottom = top + this.jigsawPuzzle.pieceWidth;
@@ -171,6 +206,7 @@ export class JigsawComponent implements OnInit {
         break;
       }
       case 'left': {
+
         coords = sideShape === 'left' ?
           this.getPathCoords(this.jigsawService.shapeLeftXUpwards, this.jigsawService.shapeLeftYUpwards, left, bottom) :
           this.getPathCoords(this.jigsawService.shapeRightXUpwards, this.jigsawService.shapeRightYUpwards, left, bottom);
