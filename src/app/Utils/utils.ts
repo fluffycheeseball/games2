@@ -5,4 +5,10 @@ export class Utils {
         }
         return false;
     }
+
+    public static getRandomBoolean(): boolean {
+            const a = new Uint8Array(1);
+            crypto.getRandomValues(a);
+            return a[0] > 127;
+    }
 }

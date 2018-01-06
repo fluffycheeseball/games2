@@ -1,9 +1,7 @@
 {
-"puzzleHeight": 3,
+"puzzleHeight": 5,
 "pieceWidth" :100,
 "pieceHeight" :100,
-"puzzleWidth" :3,
-"verticals" : ["right","right","right","right","right","right"],
-"horizontals" :[ "up", "up","up","up","up","up"],
+"puzzleWidth" :5,
 "imageUrl": "assets/images/pingu.png"
 }
