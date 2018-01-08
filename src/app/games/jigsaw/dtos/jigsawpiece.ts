@@ -1,5 +1,4 @@
-import { Piece } from "../../decoder/dtos/piece";
-
+import { Piece } from '../../decoder/dtos/piece';
 
 export interface JigsawPiece extends Piece {
    topleft: number[];

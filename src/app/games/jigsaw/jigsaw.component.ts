@@ -1,4 +1,4 @@
-import { ROW, COLUMN } from './../constants';
+import { ROW, COLUMN, BOTTOM, RIGHT, TOP, LEFT } from './../constants';
 import { Utils } from './../../Utils/utils';
 import { JigsawPiece } from './dtos/jigsawpiece';
 import { JigsawPuzzle } from './dtos/jigsaw-puzzle';
@@ -12,7 +12,6 @@ import { log } from 'util';
 import 'fabric';
 import { read } from 'fs';
 import { Console } from '@angular/core/src/console';
-import { PACKAGE_ROOT_URL } from '@angular/core/src/application_tokens';
 declare const fabric: any;
 
 @Component({
@@ -29,7 +28,6 @@ export class JigsawComponent implements OnInit {
   public mouseRelativeToImgX = 0;
   public mouseRelativeToImgY = 0;
   public errorMargin = 40;
-
 
   private canvas: any;
   private props: any = {
@@ -56,25 +54,23 @@ export class JigsawComponent implements OnInit {
   }
 
   public addImages() {
-    // for (let r = 0; r < this.pieces.length; r++) {
-    for (let r = 0; r < 25; r++) {
-      //   console.log('row' + this.pieces[r].GridPosition[ROW] + 'column ' + this.pieces[r].GridPosition[COLUMN]);
-      let x = this.pieces[r].topleft[COLUMN];
+    const total = this.jigsawPuzzle.puzzleWidth * this.jigsawPuzzle.puzzleHeight;
+    for (let r = 0; r < total; r++) {
+      const row = this.pieces[r].GridPosition[ROW];
+      const col = this.pieces[r].GridPosition[COLUMN];
       let y = this.pieces[r].topleft[ROW];
       //    console.log('x' + x + ' y ' + y);
       const mypath = new fabric.Path(this.pieces[r].pattern);
       mypath.hasControls = false;
       mypath.hasBorders = false;
-      //   console.log(mypath);
       fabric.Image.fromURL('assets/images/pingu.png',
         img => {
           const patternSourceCanvas = new fabric.StaticCanvas();
           patternSourceCanvas.add(img);
-          //   console.log(this.pieces[r].GridPosition[0] + ' ' + this.pieces[r].GridPosition[1]);
-          //   console.log('offset: ' + x + ' ' + y);
           const pattern = new fabric.Pattern({
-            offsetX: x,
-            offsetY: y,
+            offsetX: this.pieces[r].topleft[COLUMN],
+            offsetY: this.pieces[r].topleft[ROW],
+            repeat: 'no-repeat',
             source: function () {
               patternSourceCanvas.setDimensions({
                 width: img.getWidth() + 0,
@@ -112,7 +108,7 @@ export class JigsawComponent implements OnInit {
     }
     const numHorizontalJoins = (this.jigsawPuzzle.puzzleHeight - 1) * this.jigsawPuzzle.puzzleWidth;
     for (let row = 0; row < numHorizontalJoins; row++) {
-      const noduleType = Utils.getRandomBoolean() === true ? 'top' : 'bottom';
+      const noduleType = Utils.getRandomBoolean() === true ? 'up' : 'down';
       this.jigsawPuzzle.horizontals.push(noduleType);
     }
   }
@@ -128,60 +124,70 @@ export class JigsawComponent implements OnInit {
         const id = 'img' + ('000' + col).slice(-3) + '_' + ('000' + row).slice(-3);
         const piece: JigsawPiece = {
           id: id,
-          filePath: basePath + '/' + id + '.png',
-          topleft: this.getImageOffsetForPiece(row, col),
-          GridPosition: [row, col],
-          pattern: this.getPath(row, col, intialX, initialY)
+          filePath: null,
+          topleft: undefined,
+          pattern: undefined,
+          GridPosition: [row, col]
         };
+        const sideProfiles = this.getSideProfiles(piece.GridPosition);
+        piece.topleft = this.getTopLeft(sideProfiles, piece.GridPosition);
+        piece.pattern = this.getPath(row, col, intialX, initialY, sideProfiles);
         this.pieces.push(piece);
       }
     }
   }
 
-  public getImageOffsetForPiece(row: number, col: number): number[] {
-    const y = col === 0 ? 0 : (-100 * (col - 1)) - 80;
+  public getTopLeft(sideProfiles: string[], gridPosition: number[]): number[] {
+    const topLeft = [0, 0];
+    switch (sideProfiles[TOP]) {
+      case 'up': {
+        topLeft[ROW] = (gridPosition[ROW] * -100) + 19;
+        break;
+      }
+      case 'down': {
+        topLeft[ROW] = (gridPosition[ROW] * -100) + 8 ;
+        break;
+      }
+    }
+    switch (sideProfiles[LEFT]) {
+      case 'left': {
+        topLeft[COLUMN] = (gridPosition[COLUMN] * -100) + 19;
+        break;
+      }
+      case 'right': {
+        topLeft[COLUMN] = (gridPosition[COLUMN] * -100) + 8;
+        break;
+      }
+    }
+    return topLeft;
+    }
 
-    let x = row === 0 ? 0 : (-100 * (row - 1)) - 80;
-    if (row === 1) {
-      if (col === 1 || col === 4) {
-        x = ((row - 1) * 100) - 92;
-      }
-    }
-    if (row === 2) {
-      if (col === 2 || col === 4) {
-        x = ((row - 1) * 100) - 92;
-      }
-    }
-    if (row === 3) {
-      if (col === 2) {
-        x = ((row - 1) * 100) - 92;
-      }
-    }
-    if (row === 4) {
-      if (col === 0 || col === 1 || col === 4) {
-        x = ((row - 1) * 100) - 92;
-      }
-    }
 
-
-    return [x, y];
   }
 
-  public getPath(row: number, col: number, left: number, top: number): string {
+  public getPath(row: number, col: number, left: number, top: number, sideProfiles: string[]): string {
     let path = 'M ' + left + ' ' + top;
-    path = path + this.getSidePath('top', left, top, this.getSideShape('top', row, col));
-    path = path + this.getSidePath('right', left, top, this.getSideShape('right', row, col));
-    path = path + this.getSidePath('bottom', left, top, this.getSideShape('bottom', row, col));
-    path = path + this.getSidePath('left', left, top, this.getSideShape('left', row, col));
-
+    path = path + this.getSidePath('top', left, top, sideProfiles[TOP]);
+    path = path + this.getSidePath('right', left, top, sideProfiles[RIGHT]);
+    path = path + this.getSidePath('bottom', left, top, sideProfiles[BOTTOM]);
+    path = path + this.getSidePath('left', left, top, sideProfiles[LEFT]);
     return path + ' z';
+  }
+
+  public getSideProfiles(gridPosition: number[]): string[] {
+    const sideProfiles = ['', '', '', ''];
+    sideProfiles[TOP] = this.getSideShape('top', gridPosition[ROW], gridPosition[COLUMN]);
+    sideProfiles[BOTTOM] = this.getSideShape('bottom', gridPosition[ROW], gridPosition[COLUMN]);
+    sideProfiles[LEFT] = this.getSideShape('left', gridPosition[ROW], gridPosition[COLUMN]);
+    sideProfiles[RIGHT] = this.getSideShape('right', gridPosition[ROW], gridPosition[COLUMN]);
+    return sideProfiles;
   }
   public getSidePath(side: string, left: number, top: number, sideShape: string): string {
     if (sideShape === 'straight') {
       return this.GetStraightSidePath(side, left, top);
     }
     if (sideShape === undefined) {
-      console.log('oops');
+      console.log('Error: undefined ooside shapeps');
     }
     const right = left + this.jigsawPuzzle.pieceWidth;
     const bottom = top + this.jigsawPuzzle.pieceWidth;
@@ -246,7 +252,7 @@ export class JigsawComponent implements OnInit {
     if (side === 'left') {
       return ' L ' + left + ' ' + top;
     }
-    console.log('invalid side: ' + side);
+    console.log('Error: invalid side: ' + side);
     return '';
   }
 
@@ -254,7 +260,9 @@ export class JigsawComponent implements OnInit {
     switch (side) {
       case 'top':
         {
-          if (row === 0) { return 'straight'; }
+          if (row === 0) {
+            return 'straight';
+          }
           return this.jigsawPuzzle.horizontals[((row - 1) * this.jigsawPuzzle.puzzleHeight) + col];
         }
       case 'left':
@@ -274,7 +282,7 @@ export class JigsawComponent implements OnInit {
         }
       default:
         {
-          console.log('invalid side: ' + side);
+          console.log('Error: invalid side: ' + side);
         }
     }
   }
@@ -302,7 +310,6 @@ export class JigsawComponent implements OnInit {
   }
 
   public setUpCanvas() {
-    //setup front side canvas
     this.canvas = new fabric.Canvas('canvas', {
       hoverCursor: 'pointer',
       selection: true,
@@ -312,5 +319,13 @@ export class JigsawComponent implements OnInit {
     });
     this.canvas.setWidth(this.size.width);
     this.canvas.setHeight(this.size.height);
+  }
+  public addOriginalImg() {
+    fabric.Image.fromURL(this.jigsawPuzzle.imageUrl,
+      img => {
+        img.opacity = 0.5;
+        img.selectable = false;
+        this.canvas.add(img);
+      });
   }
 }
