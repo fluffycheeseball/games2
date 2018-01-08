@@ -145,7 +145,7 @@ export class JigsawComponent implements OnInit {
         break;
       }
       case 'down': {
-        topLeft[ROW] = (gridPosition[ROW] * -100) + 8 ;
+        topLeft[ROW] = (gridPosition[ROW] * -100) + 8;
         break;
       }
     }
@@ -160,10 +160,8 @@ export class JigsawComponent implements OnInit {
       }
     }
     return topLeft;
-    }
-
-
   }
+
 
   public getPath(row: number, col: number, left: number, top: number, sideProfiles: string[]): string {
     let path = 'M ' + left + ' ' + top;
