@@ -1,31 +1,37 @@
+import { JigsawPuzzle } from './dtos/jigsaw-puzzle';
+import { JigsawService } from './../../services/jigsaw.services';
+import { Observable } from 'rxjs/Observable';
 import { JigsawComponent } from './jigsaw.component';
 import { TestBed, async } from '@angular/core/testing';
+import 'rxjs/add/observable/of';
 
-describe('AppComponent', () => {
+const jigsawPuzzle: JigsawPuzzle = new JigsawPuzzle();
+
+class JigsawServiceStub {
+  public getJigsawPuzzleSettingsFromFile(path: string): Observable<JigsawPuzzle> {
+    return Observable.of(jigsawPuzzle);
+  }
+}
+
+let fixture;
+describe('JigsawComponent', () => {
   beforeEach(async(() => {
     TestBed.configureTestingModule({
       declarations: [
         JigsawComponent
       ],
+      providers: [{provide: JigsawService, useClass: JigsawServiceStub}],
     }).compileComponents();
+
+    fixture = TestBed.overrideComponent(JigsawComponent, {
+      set: {
+        template: '<span></span>'
+      }})
+      .createComponent(JigsawComponent);
   }));
 
-  it('should create the app', async(() => {
-    const fixture = TestBed.createComponent(JigsawComponent);
+  it('should create the component', async(() => {
     const app = fixture.debugElement.componentInstance;
     expect(app).toBeTruthy();
-  }));
-
-  it(`should have as title 'app'`, async(() => {
-    const fixture = TestBed.createComponent(JigsawComponent);
-    const app = fixture.debugElement.componentInstance;
-    expect(app.title).toEqual('app');
-  }));
-
-  it('should render title in a h1 tag', async(() => {
-    const fixture = TestBed.createComponent(AppComponent);
-    fixture.detectChanges();
-    const compiled = fixture.debugElement.nativeElement;
-    expect(compiled.querySelector('h1').textContent).toContain('Welcome to app!');
   }));
 });

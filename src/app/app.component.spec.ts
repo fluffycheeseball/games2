@@ -1,27 +1,51 @@
+import { NavAccordianComponent } from './nav-accordian/nav-accordian.component';
 import { TestBed, async } from '@angular/core/testing';
 import { AppComponent } from './app.component';
+import { Component } from '@angular/core';
+import { NO_ERRORS_SCHEMA } from '@angular/core';
+
+let fixture;
+let component, de, element;
 describe('AppComponent', () => {
-  beforeEach(async(() => {
-    TestBed.configureTestingModule({
-      declarations: [
-        AppComponent
-      ],
-    }).compileComponents();
-  }));
+ 
+// asynchronous block
+beforeEach(async(() => {
+  TestBed.configureTestingModule({
+    declarations: [AppComponent, MockNavAccordianComponent, MockRouterOutlet],
+    providers: [
+    //  {provide: MyService, useClass: MockMyService} // **--passing Mock service**
+  ]
+  })
+  .compileComponents();
+}));
+
+// synchronous block
+beforeEach(() => {
+  fixture = TestBed.overrideComponent(AppComponent, {
+    set: {
+      template: '<span></span>'
+    }});
+  component = TestBed.createComponent(AppComponent).componentInstance;
+});
+
+
   it('should create the app', async(() => {
-    const fixture = TestBed.createComponent(AppComponent);
-    const app = fixture.debugElement.componentInstance;
-    expect(app).toBeTruthy();
-  }));
-  it(`should have as title 'app'`, async(() => {
-    const fixture = TestBed.createComponent(AppComponent);
-    const app = fixture.debugElement.componentInstance;
-    expect(app.title).toEqual('app');
-  }));
-  it('should render title in a h1 tag', async(() => {
-    const fixture = TestBed.createComponent(AppComponent);
-    fixture.detectChanges();
-    const compiled = fixture.debugElement.nativeElement;
-    expect(compiled.querySelector('h1').textContent).toContain('Welcome to app!');
+        expect(component).toBeTruthy();
   }));
 });
+
+@Component({
+  selector: 'app-nav-accordian',
+  template: ''
+})
+class MockNavAccordianComponent {
+}
+
+@Component({
+  selector: 'router-outlet',
+  template: ''
+})
+class MockRouterOutlet {
+}
+
+
