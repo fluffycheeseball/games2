@@ -56,10 +56,8 @@ export class JigsawComponent implements OnInit {
   public addImages() {
     const total = this.jigsawPuzzle.puzzleWidth * this.jigsawPuzzle.puzzleHeight;
     for (let r = 0; r < total; r++) {
-      const row = this.pieces[r].GridPosition[ROW];
-      const col = this.pieces[r].GridPosition[COLUMN];
-      let y = this.pieces[r].topleft[ROW];
-      //    console.log('x' + x + ' y ' + y);
+    //  const row = this.pieces[r].GridPosition[ROW];
+   //   const col = this.pieces[r].GridPosition[COLUMN];
       const mypath = new fabric.Path(this.pieces[r].pattern);
       mypath.hasControls = false;
       mypath.hasBorders = false;
@@ -81,6 +79,9 @@ export class JigsawComponent implements OnInit {
           });
           mypath.fill = pattern;
           this.canvas.add(mypath);
+          mypath.on('mouse:down', function(options) {
+            console.log('path down' + options.e.clientX + ' ' + options.e.clientY);
+          });
         });
     }
   }
@@ -317,6 +318,13 @@ export class JigsawComponent implements OnInit {
     });
     this.canvas.setWidth(this.size.width);
     this.canvas.setHeight(this.size.height);
+
+    this.canvas.on('mouse:down', function(options) {
+      console.log('down' + options.e.clientX + ' ' + options.e.clientY);
+    });
+    this.canvas.on('mouse:up', function(options) {
+      console.log('up' + options.e.clientX + ' ' + options.e.clientY);
+    });
   }
   public addOriginalImg() {
     fabric.Image.fromURL(this.jigsawPuzzle.imageUrl,
