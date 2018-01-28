@@ -208,7 +208,7 @@ export class JigsawService {
     public setNodules() {
         this.jigsaw.horizontals = new Array();
         this.jigsaw.verticals = new Array();
-    
+
         const numVerticalJoins = (this.jigsaw.puzzleWidth - 1) * this.jigsaw.puzzleHeight;
         for (let col = 0; col < numVerticalJoins; col++) {
           const noduleType = Utils.getRandomBoolean() === true ? 'left' : 'right';
@@ -251,6 +251,5 @@ export class JigsawService {
                 }
         }
     }
-
 }
 

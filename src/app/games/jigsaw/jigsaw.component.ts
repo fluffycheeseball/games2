@@ -27,6 +27,7 @@ export class JigsawComponent implements OnInit {
   public mouseRelativeToImgX = 0;
   public mouseRelativeToImgY = 0;
   public errorMargin = 40;
+  public customPath: any;
 
   private canvas: any;
   private size: any = {
@@ -36,11 +37,32 @@ export class JigsawComponent implements OnInit {
 
   constructor(private jigsawSvce: JigsawService) {
   }
+  public CreateCustomPath() {
+   this.customPath = fabric.util.createClass(fabric.Path, {
+      type: 'PiecePath',
+      patt: '',
+      initialize: function (path, options) {
+        options || (options = {});
+        this.callSuper('initialize', path, options);
+        this.set({
+          gridCol: options.gridCol,
+          gridRow: options.gridRow
+        });
+    //    console.log(this.gridCol);
+     //   console.log(this.gridRow);
+      },
+      _render: function (ctx) {
+        this.callSuper('_render', ctx);
+      }
+    });
+  }
 
   public addImages() {
+
     const total = this.jigsawSvce.jigsaw.puzzleWidth * this.jigsawSvce.jigsaw.puzzleHeight;
     for (let r = 0; r < total; r++) {
-      const mypath = new fabric.Path(this.pieces[r].pattern);
+      const mypath = new this.customPath(this.pieces[r].pattern, 
+         { gridRow: this.pieces[r].GridPosition[ROW], gridCol: this.pieces[r].GridPosition[COLUMN] });
       mypath.hasControls = false;
       mypath.hasBorders = false;
       fabric.Image.fromURL('assets/images/pingu.png',
@@ -75,6 +97,7 @@ export class JigsawComponent implements OnInit {
       res => {
         this.jigsawSvce.SetJigsaw(res);
         this.pieces = this.jigsawSvce.getPieces(basePath);
+        this.CreateCustomPath();
       }
     );
   }
@@ -82,6 +105,7 @@ export class JigsawComponent implements OnInit {
   ngOnInit() {
     this.resetSource();
     this.setUpCanvas();
+
   }
 
   public setUpCanvas() {
