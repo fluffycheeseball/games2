@@ -60,7 +60,8 @@ export class JigsawService {
               filePath: null,
               topleft: undefined,
               pattern: undefined,
-              GridPosition: [row, col]
+              GridPosition: [row, col],
+              temp: ''
             };
             const sideProfiles = this.getSideProfiles(piece.GridPosition);
             piece.topleft = this.getTopLeft(sideProfiles, piece.GridPosition);
@@ -102,7 +103,7 @@ export class JigsawService {
             return this.GetStraightSidePath(side, left, top);
         }
         if (sideShape === undefined) {
-            console.log('Error: undefined ooside shapeps');
+            console.log('Error: undefined side shape');
         }
         const right = left + this.jigsaw.pieceWidth;
         const bottom = top + this.jigsaw.pieceHeight;
@@ -176,16 +177,18 @@ export class JigsawService {
 
     public coordsToString(coords: number[]) {
         let str = '';
+
         for (let i = 0; i < coords.length; i++) {
             if (i % 6 === 0) {
                 str = str + ' C ';
-            }
-            str = str + (coords[i]).toString();
-            if (i < coords.length - 1) {
+            }            else {
                 str = str + ',';
             }
+            str = str + (coords[i]).toString();
         }
+
         return str;
+
     }
 
     public getPath(row: number, col: number, left: number, top: number, sideProfiles: string[]): string {
