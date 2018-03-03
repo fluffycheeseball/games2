@@ -7,8 +7,12 @@ export class Utils {
     }
 
     public static getRandomBoolean(): boolean {
-            const a = new Uint8Array(1);
-            crypto.getRandomValues(a);
-            return a[0] > 127;
+        const a = new Uint8Array(1);
+        crypto.getRandomValues(a);
+        return a[0] > 127;
+    }
+
+    public static padLeft(input: number, numchars: number, padChar?: string) {
+        return Array(numchars - String(input).length + 1).join(padChar || '0') + input;
     }
 }

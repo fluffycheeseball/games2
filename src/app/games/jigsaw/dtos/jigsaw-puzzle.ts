@@ -6,5 +6,8 @@ export class JigsawPuzzle {
     public verticals: string[];
     public horizontals: string[];
     public imageUrl: string;
+    public lockedPieceIndex?: number;
+    public lockX?: number;
+    public lockY?: number;
 }
 

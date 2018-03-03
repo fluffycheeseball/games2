@@ -56,19 +56,75 @@ export class JigsawComponent implements OnInit {
 
   public addImages() {
     this.setPieces();
-    this.canvas.set({ pieces: this.pieces });
-    this.canvas.on('mouse:up', function (options) {
+    this.canvas.set({ pieces: this.pieces, jigsawPuzzle: this.jigsawSvce.jigsaw });
+    this.canvas.on('mouse:move', function (options) {
+      if (!Utils.IsNullOrUndefined(this.jigsawPuzzle.lockedPieceIndex)) {
+     //   console.log(options.e.offsetX + ', ' + options.e.offsetY);
+      }
+    });
+
+    this.canvas.on('mouse:down', function (options) {
 
       const pointInSvgPolygon = require('point-in-svg-polygon');
-      let result = false;
       if (!Utils.IsNullOrUndefined(options.target)) {
-        const yOff = options.e.clientY - options.target.canvas._offset.top;
-        const xOff = options.e.clientX - options.target.canvas._offset.left;
-        result = pointInSvgPolygon.isInside([xOff, yOff], this.pieces[0].pattern);
+        for (let i = 0; i < this.pieces.length; i++) {
+          const yOff = options.e.clientY - options.target.canvas._offset.top;
+          const xOff = options.e.clientX - options.target.canvas._offset.left;
+          const result = pointInSvgPolygon.isInside([xOff, yOff], this.pieces[i].pattern);
+          if (result === true) {
+            this.jigsawPuzzle.lockedPieceIndex = i;
+            console.log('piece ' + i + ' locked');
+            this.jigsawPuzzle.lockX = xOff - this.pieces[i].topleft[LEFT];
+            console.log(this.jigsawPuzzle.lockX);
+            this.jigsawPuzzle.lockY = yOff - this.pieces[i].tlCorner[TOP];
+
+            console.log(this.jigsawPuzzle.lockY);
+            break;
+          }
+        }
+      }  else {
+        console.log(options);
       }
-      console.log(result);
+    });
+    // this has to be inline - we cannot pass options to an angular method
+    this.canvas.on('mouse:up', function (options) {
+      // this has to be in line - the javascript lib
+
+      if (!Utils.IsNullOrUndefined(this.jigsawPuzzle.lockedPieceIndex)) {
+        const pointInSvgPolygon = require('point-in-svg-polygon');
+        console.log('piece ' + this.jigsawPuzzle.lockedPieceIndex + ' unlocked');
+
+
+        // check if we need to joint to another piece
+        if (!Utils.IsNullOrUndefined(options.target)) {
+          for (let i = 0; i < this.pieces.length; i++) {
+
+            // skip the locked piece
+            if (i === this.jigsawPuzzle.lockedPieceIndex) {
+              continue;
+            }
+
+            const yOff = options.e.clientY - options.target.canvas._offset.top;
+            const xOff = options.e.clientX - options.target.canvas._offset.left;
+            const result = pointInSvgPolygon.isInside([xOff, yOff], this.pieces[i].pattern);
+            if (result === true) {
+              console.log('join to piece ' + i);
+            }
+          }
+        }
+
+        // mark unlocked
+        this.jigsawPuzzle.lockedPieceIndex = null;
+        this.jigsawPuzzle.lockX = null;
+        this.jigsawPuzzle.lockY = null;
+      }
+
+      
+
     });
   }
+
+
 
   public setPieces() {
     const total = this.jigsawSvce.jigsaw.puzzleWidth * this.jigsawSvce.jigsaw.puzzleHeight;
@@ -96,10 +152,9 @@ export class JigsawComponent implements OnInit {
             },
           });
           mypath.fill = pattern;
-          this.pieces[r].temp = mypath.path;
           this.canvas.add(mypath);
           mypath.on('mouse:down', function (options) {
-            //   console.log('path down' + options.e.clientX + ' ' + options.e.clientY);
+               console.log('piece down');
           });
         });
     }
@@ -135,10 +190,10 @@ export class JigsawComponent implements OnInit {
     this.canvas.setHeight(this.size.height);
 
     this.canvas.on('mouse:down', function (options) {
-      //  console.log('down' + options.e.clientX + ' ' + options.e.clientY);
+
     });
     this.canvas.on('mouse:up', function (options) {
-      //   console.log('up' + options.e.clientX + ' ' + options.e.clientY);
+
     });
   }
   public addOriginalImg() {

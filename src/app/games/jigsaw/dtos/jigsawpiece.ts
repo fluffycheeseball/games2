@@ -4,5 +4,5 @@ export interface JigsawPiece extends Piece {
    topleft: number[];
    GridPosition: number[];
    pattern: string;
-   temp: string;
+   tlCorner: number[];
 }
