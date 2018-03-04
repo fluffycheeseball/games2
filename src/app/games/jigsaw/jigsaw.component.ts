@@ -94,7 +94,7 @@ export class JigsawComponent implements OnInit {
             const result = pointInSvgPolygon.isInside([xOff, yOff], this.pieces[i].pattern);
             if (result === true) {
               // check whether these two pieces should be joined
-              let piece = options.target.grpieceidRow;
+              const piece = options.target.grpieceidRow;
               console.log('piece ' + piece.id + ' unlocked');
               if (piece.joiningPieces[TOP] === i) {
                 console.log('join to bottom of piece ' + i);
@@ -108,6 +108,9 @@ export class JigsawComponent implements OnInit {
               if (piece.joiningPieces[RIGHT] === i) {
                 console.log('join to left of piece ' + i);
               }
+              console.log(options.target.grpieceidRow);
+              console.log('lockX ' + this.jigsawPuzzle.lockX);
+              console.log('lockY ' + this.jigsawPuzzle.lockY);
             }
           }
         }

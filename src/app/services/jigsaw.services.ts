@@ -122,7 +122,7 @@ export class JigsawService {
 
     public getSidePath(side: string, left: number, top: number, sideShape: string): string {
         if (sideShape === 'straight') {
-            return this.GetStraightSidePath(side, left, top);
+            return this.GetStraightSidePath(side);
         }
         if (sideShape === undefined) {
             console.log('Error: undefined side shape');
@@ -161,20 +161,18 @@ export class JigsawService {
         return this.coordsToString(coords);
     }
 
-    public GetStraightSidePath(side: string, left: number, top: number): string {
-        const right = left + this.jigsaw.pieceWidth;
-        const bottom = top + this.jigsaw.pieceHeight;
+    public GetStraightSidePath(side: string): string {
         if (side === 'top') {
-            return ' L ' + right + ' ' + top;
+            return ' l ' + this.jigsaw.pieceWidth + ' 0';
         }
         if (side === 'bottom') {
-            return ' L ' + left + ' ' + bottom;
+            return ' l ' + '-' + this.jigsaw.pieceWidth + ' 0';
         }
         if (side === 'right') {
-            return ' L ' + right + ' ' + bottom;
+            return ' l 0 ' + this.jigsaw.pieceHeight;
         }
         if (side === 'left') {
-            return ' L ' + left + ' ' + top;
+            return ' l 0 ' + '-' + this.jigsaw.pieceHeight;
         }
         console.log('Error: invalid side: ' + side);
         return '';
