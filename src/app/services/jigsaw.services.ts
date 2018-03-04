@@ -1,3 +1,4 @@
+import { JigsawPuzzle } from './../games/jigsaw/dtos/jigsaw-puzzle';
 import { Utils } from './../Utils/utils';
 import { JigsawPiece } from './../games/jigsaw/dtos/jigsawpiece';
 import { ROW, TOP, LEFT, COLUMN, BOTTOM, RIGHT } from './../games/constants';
@@ -5,8 +6,6 @@ import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
 import { Http, Response } from '@angular/http';
 import 'rxjs/add/operator/map';
-import { JigsawPuzzle } from '../games/jigsaw/dtos/jigsaw-puzzle';
-
 
 @Injectable()
 export class JigsawService {
@@ -49,20 +48,21 @@ export class JigsawService {
     public getPieces(basePath: string): JigsawPiece[] {
         const pieces: JigsawPiece[] = [];
         const spacer = 0;
-
+        let i = 0;
         for (let row = 0; row < this.jigsaw.puzzleHeight; ++row) {
             for (let col = 0; col < this.jigsaw.puzzleWidth; ++col) {
                 const intialX = (col * (this.jigsaw.pieceWidth + spacer)) + 0;
                 const initialY = (row * (this.jigsaw.pieceHeight + spacer)) + 0;
                 const id = 'img' + ('000' + col).slice(-3) + '_' + ('000' + row).slice(-3);
                 const piece: JigsawPiece = {
-                    id: id,
-                    filePath: null,
+                    id: i++,
                     topleft: undefined,
                     pattern: undefined,
-                    tlCorner:undefined,
-                    GridPosition: [row, col]
+                    tlCorner: undefined,
+                    GridPosition: [row, col],
+                    joiningPieces: [null, null, null, null]
                 };
+                piece.joiningPieces = this.GetIdsOfJoiningPieces(row, col, piece.id);
                 const sideProfiles = this.getSideProfiles(piece.GridPosition);
                 piece.topleft = this.getTopLeft(sideProfiles, piece.GridPosition);
                 piece.pattern = this.getPath(row, col, intialX, initialY, sideProfiles);
@@ -73,7 +73,26 @@ export class JigsawService {
         return pieces;
     }
 
+    public GetIdsOfJoiningPieces(row: number, col: number, id: number): number[] {
+        const joiningIds = [null, null, null, null];
 
+        if (row > 0) {
+            joiningIds[TOP] = ((row - 1) * this.jigsaw.puzzleWidth) + col;
+        }
+        if (row < this.jigsaw.puzzleHeight - 1) {
+            joiningIds[BOTTOM] = ((row + 1) * this.jigsaw.puzzleWidth) + col;
+        }
+
+        if (col > 0) {
+            joiningIds[LEFT] = id - 1;
+
+        }
+        if (col < this.jigsaw.puzzleHeight - 1) {
+            joiningIds[RIGHT] = id + 1;
+        }
+        //console.log('this id: ' + id + ' top: ' + joiningIds[TOP] + ' bottom: ' + joiningIds[BOTTOM] +' left: ' + joiningIds[LEFT] +' right: ' + joiningIds[RIGHT]);
+        return joiningIds;
+    }
 
     public getTopLeft(sideProfiles: string[], gridPosition: number[]): number[] {
 

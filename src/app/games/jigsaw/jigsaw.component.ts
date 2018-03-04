@@ -59,67 +59,62 @@ export class JigsawComponent implements OnInit {
     this.canvas.set({ pieces: this.pieces, jigsawPuzzle: this.jigsawSvce.jigsaw });
     this.canvas.on('mouse:move', function (options) {
       if (!Utils.IsNullOrUndefined(this.jigsawPuzzle.lockedPieceIndex)) {
-     //   console.log(options.e.offsetX + ', ' + options.e.offsetY);
+        //   console.log(options.e.offsetX + ', ' + options.e.offsetY);
       }
     });
 
     this.canvas.on('mouse:down', function (options) {
 
       const pointInSvgPolygon = require('point-in-svg-polygon');
-      if (!Utils.IsNullOrUndefined(options.target)) {
-        for (let i = 0; i < this.pieces.length; i++) {
-          const yOff = options.e.clientY - options.target.canvas._offset.top;
-          const xOff = options.e.clientX - options.target.canvas._offset.left;
-          const result = pointInSvgPolygon.isInside([xOff, yOff], this.pieces[i].pattern);
-          if (result === true) {
-            this.jigsawPuzzle.lockedPieceIndex = i;
-            console.log('piece ' + i + ' locked');
-            this.jigsawPuzzle.lockX = xOff - this.pieces[i].topleft[LEFT];
-            console.log(this.jigsawPuzzle.lockX);
-            this.jigsawPuzzle.lockY = yOff - this.pieces[i].tlCorner[TOP];
-
-            console.log(this.jigsawPuzzle.lockY);
-            break;
-          }
-        }
-      }  else {
-        console.log(options);
+      if (!Utils.IsNullOrUndefined(options.target) && !Utils.IsNullOrUndefined(options.target.grpieceidRow)) {
+        const piece = options.target.grpieceidRow;
+         const yOff = options.e.clientY - options.target.canvas._offset.top;
+         const xOff = options.e.clientX - options.target.canvas._offset.left;
+         const result = pointInSvgPolygon.isInside([xOff, yOff], piece.pattern);
+         if (result === true) {
+           console.log('piece ' + piece.id + ' locked');
+           this.jigsawPuzzle.lockX = xOff - piece.topleft[LEFT];
+           console.log(this.jigsawPuzzle.lockX);
+           this.jigsawPuzzle.lockY = yOff - piece.tlCorner[TOP];
+           console.log(this.jigsawPuzzle.lockY);
+         }
+      } else {
+        console.log('no piece clicked');
       }
     });
     // this has to be inline - we cannot pass options to an angular method
     this.canvas.on('mouse:up', function (options) {
       // this has to be in line - the javascript lib
-
-      if (!Utils.IsNullOrUndefined(this.jigsawPuzzle.lockedPieceIndex)) {
-        const pointInSvgPolygon = require('point-in-svg-polygon');
-        console.log('piece ' + this.jigsawPuzzle.lockedPieceIndex + ' unlocked');
-
-
         // check if we need to joint to another piece
-        if (!Utils.IsNullOrUndefined(options.target)) {
+        if (!Utils.IsNullOrUndefined(options.target) && !Utils.IsNullOrUndefined(options.target.grpieceidRow)) {
+          const pointInSvgPolygon = require('point-in-svg-polygon');
           for (let i = 0; i < this.pieces.length; i++) {
-
-            // skip the locked piece
-            if (i === this.jigsawPuzzle.lockedPieceIndex) {
-              continue;
-            }
-
             const yOff = options.e.clientY - options.target.canvas._offset.top;
             const xOff = options.e.clientX - options.target.canvas._offset.left;
             const result = pointInSvgPolygon.isInside([xOff, yOff], this.pieces[i].pattern);
             if (result === true) {
-              console.log('join to piece ' + i);
+              // check whether these two pieces should be joined
+              let piece = options.target.grpieceidRow;
+              console.log('piece ' + piece.id + ' unlocked');
+              if (piece.joiningPieces[TOP] === i) {
+                console.log('join to bottom of piece ' + i);
+              }
+              if (piece.joiningPieces[BOTTOM] === i) {
+                console.log('join to top of piece ' + i);
+              }
+              if (piece.joiningPieces[LEFT] === i) {
+                console.log('join to right of piece ' + i);
+              }
+              if (piece.joiningPieces[RIGHT] === i) {
+                console.log('join to left of piece ' + i);
+              }
             }
           }
         }
 
         // mark unlocked
-        this.jigsawPuzzle.lockedPieceIndex = null;
         this.jigsawPuzzle.lockX = null;
         this.jigsawPuzzle.lockY = null;
-      }
-
-      
 
     });
   }
@@ -154,7 +149,7 @@ export class JigsawComponent implements OnInit {
           mypath.fill = pattern;
           this.canvas.add(mypath);
           mypath.on('mouse:down', function (options) {
-               console.log('piece down');
+            console.log('piece down');
           });
         });
     }
