@@ -1,7 +1,8 @@
-import { Piece } from '../../decoder/dtos/piece';
-
-export interface JigsawPiece extends Piece {
+export interface JigsawPiece {
+   id: number;
    topleft: number[];
    GridPosition: number[];
    pattern: string;
+   tlCorner: number[];
+   joiningPieces?: number[];
 }

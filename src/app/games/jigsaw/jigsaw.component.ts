@@ -38,18 +38,15 @@ export class JigsawComponent implements OnInit {
   constructor(private jigsawSvce: JigsawService) {
   }
   public CreateCustomPath() {
-   this.customPath = fabric.util.createClass(fabric.Path, {
+    this.customPath = fabric.util.createClass(fabric.Path, {
       type: 'PiecePath',
       patt: '',
       initialize: function (path, options) {
         options || (options = {});
         this.callSuper('initialize', path, options);
         this.set({
-          gridCol: options.gridCol,
-          gridRow: options.gridRow
+          piece: options.piece
         });
-    //    console.log(this.gridCol);
-     //   console.log(this.gridRow);
       },
       _render: function (ctx) {
         this.callSuper('_render', ctx);
@@ -58,11 +55,79 @@ export class JigsawComponent implements OnInit {
   }
 
   public addImages() {
+    this.setPieces();
+    this.canvas.set({ pieces: this.pieces, jigsawPuzzle: this.jigsawSvce.jigsaw });
+    this.canvas.on('mouse:move', function (options) {
+      if (!Utils.IsNullOrUndefined(this.jigsawPuzzle.lockedPieceIndex)) {
+        //   console.log(options.e.offsetX + ', ' + options.e.offsetY);
+      }
+    });
 
+    this.canvas.on('mouse:down', function (options) {
+
+      const pointInSvgPolygon = require('point-in-svg-polygon');
+      if (!Utils.IsNullOrUndefined(options.target) && !Utils.IsNullOrUndefined(options.target.grpieceidRow)) {
+        const piece = options.target.grpieceidRow;
+         const yOff = options.e.clientY - options.target.canvas._offset.top;
+         const xOff = options.e.clientX - options.target.canvas._offset.left;
+         const result = pointInSvgPolygon.isInside([xOff, yOff], piece.pattern);
+         if (result === true) {
+           console.log('piece ' + piece.id + ' locked');
+           this.jigsawPuzzle.lockX = xOff - piece.topleft[LEFT];
+           console.log(this.jigsawPuzzle.lockX);
+           this.jigsawPuzzle.lockY = yOff - piece.tlCorner[TOP];
+           console.log(this.jigsawPuzzle.lockY);
+         }
+      } else {
+        console.log('no piece clicked');
+      }
+    });
+    // this has to be inline - we cannot pass options to an angular method
+    this.canvas.on('mouse:up', function (options) {
+      // this has to be in line - the javascript lib
+        // check if we need to joint to another piece
+        if (!Utils.IsNullOrUndefined(options.target) && !Utils.IsNullOrUndefined(options.target.grpieceidRow)) {
+          const pointInSvgPolygon = require('point-in-svg-polygon');
+          for (let i = 0; i < this.pieces.length; i++) {
+            const yOff = options.e.clientY - options.target.canvas._offset.top;
+            const xOff = options.e.clientX - options.target.canvas._offset.left;
+            const result = pointInSvgPolygon.isInside([xOff, yOff], this.pieces[i].pattern);
+            if (result === true) {
+              // check whether these two pieces should be joined
+              let piece = options.target.grpieceidRow;
+              console.log('piece ' + piece.id + ' unlocked');
+              if (piece.joiningPieces[TOP] === i) {
+                console.log('join to bottom of piece ' + i);
+              }
+              if (piece.joiningPieces[BOTTOM] === i) {
+                console.log('join to top of piece ' + i);
+              }
+              if (piece.joiningPieces[LEFT] === i) {
+                console.log('join to right of piece ' + i);
+              }
+              if (piece.joiningPieces[RIGHT] === i) {
+                console.log('join to left of piece ' + i);
+              }
+            }
+          }
+        }
+
+        // mark unlocked
+        this.jigsawPuzzle.lockX = null;
+        this.jigsawPuzzle.lockY = null;
+
+    });
+  }
+
+
+
+  public setPieces() {
     const total = this.jigsawSvce.jigsaw.puzzleWidth * this.jigsawSvce.jigsaw.puzzleHeight;
     for (let r = 0; r < total; r++) {
-      const mypath = new this.customPath(this.pieces[r].pattern, 
-         { gridRow: this.pieces[r].GridPosition[ROW], gridCol: this.pieces[r].GridPosition[COLUMN] });
+
+      const mypath = new this.customPath(this.pieces[r].pattern,
+        { grpieceidRow: this.pieces[r] }
+      );
       mypath.hasControls = false;
       mypath.hasBorders = false;
       fabric.Image.fromURL('assets/images/pingu.png',
@@ -84,7 +149,7 @@ export class JigsawComponent implements OnInit {
           mypath.fill = pattern;
           this.canvas.add(mypath);
           mypath.on('mouse:down', function (options) {
-            console.log('path down' + options.e.clientX + ' ' + options.e.clientY);
+            console.log('piece down');
           });
         });
     }
@@ -120,10 +185,10 @@ export class JigsawComponent implements OnInit {
     this.canvas.setHeight(this.size.height);
 
     this.canvas.on('mouse:down', function (options) {
-      console.log('down' + options.e.clientX + ' ' + options.e.clientY);
+
     });
     this.canvas.on('mouse:up', function (options) {
-      console.log('up' + options.e.clientX + ' ' + options.e.clientY);
+
     });
   }
   public addOriginalImg() {
@@ -134,4 +199,5 @@ export class JigsawComponent implements OnInit {
         this.canvas.add(img);
       });
   }
+
 }

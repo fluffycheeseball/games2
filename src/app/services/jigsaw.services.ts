@@ -1,12 +1,11 @@
+import { JigsawPuzzle } from './../games/jigsaw/dtos/jigsaw-puzzle';
+import { Utils } from './../Utils/utils';
 import { JigsawPiece } from './../games/jigsaw/dtos/jigsawpiece';
 import { ROW, TOP, LEFT, COLUMN, BOTTOM, RIGHT } from './../games/constants';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
 import { Http, Response } from '@angular/http';
 import 'rxjs/add/operator/map';
-import { JigsawPuzzle } from '../games/jigsaw/dtos/jigsaw-puzzle';
-import { Utils } from '../Utils/utils';
-
 
 @Injectable()
 export class JigsawService {
@@ -49,27 +48,51 @@ export class JigsawService {
     public getPieces(basePath: string): JigsawPiece[] {
         const pieces: JigsawPiece[] = [];
         const spacer = 0;
-    
+        let i = 0;
         for (let row = 0; row < this.jigsaw.puzzleHeight; ++row) {
-          for (let col = 0; col < this.jigsaw.puzzleWidth; ++col) {
-            const intialX = (col * (this.jigsaw.pieceWidth + spacer)) + 0;
-            const initialY = (row * (this.jigsaw.pieceHeight + spacer)) + 0;
-            const id = 'img' + ('000' + col).slice(-3) + '_' + ('000' + row).slice(-3);
-            const piece: JigsawPiece = {
-              id: id,
-              filePath: null,
-              topleft: undefined,
-              pattern: undefined,
-              GridPosition: [row, col]
-            };
-            const sideProfiles = this.getSideProfiles(piece.GridPosition);
-            piece.topleft = this.getTopLeft(sideProfiles, piece.GridPosition);
-            piece.pattern = this.getPath(row, col, intialX, initialY, sideProfiles);
-            pieces.push(piece);
-          }
+            for (let col = 0; col < this.jigsaw.puzzleWidth; ++col) {
+                const intialX = (col * (this.jigsaw.pieceWidth + spacer)) + 0;
+                const initialY = (row * (this.jigsaw.pieceHeight + spacer)) + 0;
+                const id = 'img' + ('000' + col).slice(-3) + '_' + ('000' + row).slice(-3);
+                const piece: JigsawPiece = {
+                    id: i++,
+                    topleft: undefined,
+                    pattern: undefined,
+                    tlCorner: undefined,
+                    GridPosition: [row, col],
+                    joiningPieces: [null, null, null, null]
+                };
+                piece.joiningPieces = this.GetIdsOfJoiningPieces(row, col, piece.id);
+                const sideProfiles = this.getSideProfiles(piece.GridPosition);
+                piece.topleft = this.getTopLeft(sideProfiles, piece.GridPosition);
+                piece.pattern = this.getPath(row, col, intialX, initialY, sideProfiles);
+                piece.tlCorner = [intialX, initialY];
+                pieces.push(piece);
+            }
         }
         return pieces;
-      }
+    }
+
+    public GetIdsOfJoiningPieces(row: number, col: number, id: number): number[] {
+        const joiningIds = [null, null, null, null];
+
+        if (row > 0) {
+            joiningIds[TOP] = ((row - 1) * this.jigsaw.puzzleWidth) + col;
+        }
+        if (row < this.jigsaw.puzzleHeight - 1) {
+            joiningIds[BOTTOM] = ((row + 1) * this.jigsaw.puzzleWidth) + col;
+        }
+
+        if (col > 0) {
+            joiningIds[LEFT] = id - 1;
+
+        }
+        if (col < this.jigsaw.puzzleHeight - 1) {
+            joiningIds[RIGHT] = id + 1;
+        }
+        //console.log('this id: ' + id + ' top: ' + joiningIds[TOP] + ' bottom: ' + joiningIds[BOTTOM] +' left: ' + joiningIds[LEFT] +' right: ' + joiningIds[RIGHT]);
+        return joiningIds;
+    }
 
     public getTopLeft(sideProfiles: string[], gridPosition: number[]): number[] {
 
@@ -102,7 +125,7 @@ export class JigsawService {
             return this.GetStraightSidePath(side, left, top);
         }
         if (sideShape === undefined) {
-            console.log('Error: undefined ooside shapeps');
+            console.log('Error: undefined side shape');
         }
         const right = left + this.jigsaw.pieceWidth;
         const bottom = top + this.jigsaw.pieceHeight;
@@ -176,20 +199,22 @@ export class JigsawService {
 
     public coordsToString(coords: number[]) {
         let str = '';
+
         for (let i = 0; i < coords.length; i++) {
             if (i % 6 === 0) {
                 str = str + ' C ';
-            }
-            str = str + (coords[i]).toString();
-            if (i < coords.length - 1) {
+            } else {
                 str = str + ',';
             }
+            str = str + (coords[i]).toString();
         }
+
         return str;
+
     }
 
     public getPath(row: number, col: number, left: number, top: number, sideProfiles: string[]): string {
-        let path = 'M ' + left + ' ' + top;
+        let path = 'M ' + Utils.padLeft(left, 4) + ' ' + Utils.padLeft(top, 4);
         path = path + this.getSidePath('top', left, top, sideProfiles[TOP]);
         path = path + this.getSidePath('right', left, top, sideProfiles[RIGHT]);
         path = path + this.getSidePath('bottom', left, top, sideProfiles[BOTTOM]);
@@ -211,15 +236,15 @@ export class JigsawService {
 
         const numVerticalJoins = (this.jigsaw.puzzleWidth - 1) * this.jigsaw.puzzleHeight;
         for (let col = 0; col < numVerticalJoins; col++) {
-          const noduleType = Utils.getRandomBoolean() === true ? 'left' : 'right';
-          this.jigsaw.verticals.push(noduleType);
+            const noduleType = Utils.getRandomBoolean() === true ? 'left' : 'right';
+            this.jigsaw.verticals.push(noduleType);
         }
         const numHorizontalJoins = (this.jigsaw.puzzleHeight - 1) * this.jigsaw.puzzleWidth;
         for (let row = 0; row < numHorizontalJoins; row++) {
-          const noduleType = Utils.getRandomBoolean() === true ? 'up' : 'down';
-          this.jigsaw.horizontals.push(noduleType);
+            const noduleType = Utils.getRandomBoolean() === true ? 'up' : 'down';
+            this.jigsaw.horizontals.push(noduleType);
         }
-      }
+    }
 
     public getSideShape(side: string, row: number, col: number): string {
         switch (side) {
