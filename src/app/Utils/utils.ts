@@ -15,4 +15,8 @@ export class Utils {
     public static padLeft(input: number, numchars: number, padChar?: string) {
         return Array(numchars - String(input).length + 1).join(padChar || '0') + input;
     }
+
+    public static GetRandomIntInRange(min: number, max: number): number {
+        return Math.floor(Math.random() * (max - min + 1) + min);
+    }
 }

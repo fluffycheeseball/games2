@@ -36,6 +36,7 @@ export class JigsawComponent implements OnInit {
   };
 
   constructor(private jigsawSvce: JigsawService) {
+    this.jigsawSvce.SetCanvasDimensions(this.size.width, this.size.Height);
   }
   public CreateCustomPath() {
     this.customPath = fabric.util.createClass(fabric.Path, {
@@ -68,53 +69,74 @@ export class JigsawComponent implements OnInit {
       const pointInSvgPolygon = require('point-in-svg-polygon');
       if (!Utils.IsNullOrUndefined(options.target) && !Utils.IsNullOrUndefined(options.target.grpieceidRow)) {
         const piece = options.target.grpieceidRow;
-         const yOff = options.e.clientY - options.target.canvas._offset.top;
-         const xOff = options.e.clientX - options.target.canvas._offset.left;
-         const result = pointInSvgPolygon.isInside([xOff, yOff], piece.pattern);
-         if (result === true) {
-           console.log('piece ' + piece.id + ' locked');
-           this.jigsawPuzzle.lockX = xOff - piece.topleft[LEFT];
-           console.log(this.jigsawPuzzle.lockX);
-           this.jigsawPuzzle.lockY = yOff - piece.tlCorner[TOP];
-           console.log(this.jigsawPuzzle.lockY);
-         }
+        const yOff = options.e.clientY - options.target.canvas._offset.top;
+        const xOff = options.e.clientX - options.target.canvas._offset.left;
+        const result = pointInSvgPolygon.isInside([xOff, yOff], piece.pattern);
+        if (result === true) {
+   //       console.log('piece ' + piece.id + ' locked');
+        }
       } else {
-        console.log('no piece clicked');
+   //     console.log('no piece clicked');
       }
     });
     // this has to be inline - we cannot pass options to an angular method
     this.canvas.on('mouse:up', function (options) {
       // this has to be in line - the javascript lib
-        // check if we need to joint to another piece
-        if (!Utils.IsNullOrUndefined(options.target) && !Utils.IsNullOrUndefined(options.target.grpieceidRow)) {
-          const pointInSvgPolygon = require('point-in-svg-polygon');
-          for (let i = 0; i < this.pieces.length; i++) {
-            const yOff = options.e.clientY - options.target.canvas._offset.top;
-            const xOff = options.e.clientX - options.target.canvas._offset.left;
-            const result = pointInSvgPolygon.isInside([xOff, yOff], this.pieces[i].pattern);
-            if (result === true) {
-              // check whether these two pieces should be joined
-              let piece = options.target.grpieceidRow;
-              console.log('piece ' + piece.id + ' unlocked');
-              if (piece.joiningPieces[TOP] === i) {
-                console.log('join to bottom of piece ' + i);
-              }
-              if (piece.joiningPieces[BOTTOM] === i) {
-                console.log('join to top of piece ' + i);
-              }
-              if (piece.joiningPieces[LEFT] === i) {
-                console.log('join to right of piece ' + i);
-              }
-              if (piece.joiningPieces[RIGHT] === i) {
-                console.log('join to left of piece ' + i);
-              }
+
+      // check if we need to joint to another piece
+      if (!Utils.IsNullOrUndefined(options.target) && !Utils.IsNullOrUndefined(options.target.grpieceidRow)) {
+        const piece = options.target.grpieceidRow;
+
+        const yOff = options.e.clientY - options.target.canvas._offset.top;
+        const xOff = options.e.clientX - options.target.canvas._offset.left;
+    //    console.log('target l,t ' +  options.target.left + ', ' + options.target.top);
+    //    console.log('target r,b ' +  (options.target.left + options.target.width) + ', ' + (options.target.top + options.target.height);
+        const pointInSvgPolygon = require('point-in-svg-polygon');
+        // check for a right/left join
+        // is the right side of the target piece within 20 pixels of the left side of its matching piece 
+ const pieceRight = options.target.left + options.target.width;
+        for (let i = 0; i < this.pieces.length; i++) {
+          const result = pointInSvgPolygon.isInside([pieceRight, yOff], this.pieces[i].pattern);
+          if (result === true) {
+            if (piece.joiningPieces[RIGHT] === i) {
+              console.log('j join ' + piece.id + 'to left of ' + i);
+              break;
             }
           }
         }
+        for (let i = 0; i < this.pieces.length; i++) {
+          const result = pointInSvgPolygon.isInside([options.target.left, yOff], this.pieces[i].pattern);
+          if (result === true) {
+            if (piece.joiningPieces[LEFT] === i) {
+              console.log('j join ' + piece.id + 'to right of ' + i);
+              break;
+            }
+          }
+        }
+        for (let i = 0; i < this.pieces.length; i++) {
+          const result = pointInSvgPolygon.isInside([xOff, options.target.top], this.pieces[i].pattern);
+          if (result === true) {
+            if (piece.joiningPieces[TOP] === i) {
+              console.log('j join ' + piece.id + 'to bottom of ' + i);
+              break;
+            }
+          }
+        }
+        const pieceBottom = options.target.top+ options.target.height;
+        for (let i = 0; i < this.pieces.length; i++) {
+          const result = pointInSvgPolygon.isInside([xOff, pieceBottom], this.pieces[i].pattern);
+          if (result === true) {
+            if (piece.joiningPieces[BOTTOM] === i) {
+              console.log('j join ' + piece.id + 'to top of ' + i);
+              break;
+            }
+          }
+        }
+      }
 
-        // mark unlocked
-        this.jigsawPuzzle.lockX = null;
-        this.jigsawPuzzle.lockY = null;
+      // mark unlocked
+      this.jigsawPuzzle.lockX = null;
+      this.jigsawPuzzle.lockY = null;
 
     });
   }
@@ -130,7 +152,7 @@ export class JigsawComponent implements OnInit {
       );
       mypath.hasControls = false;
       mypath.hasBorders = false;
-      fabric.Image.fromURL('assets/images/pingu.png',
+      fabric.Image.fromURL(this.jigsawSvce.jigsaw.imageUrl,
         img => {
           const patternSourceCanvas = new fabric.StaticCanvas();
           patternSourceCanvas.add(img);

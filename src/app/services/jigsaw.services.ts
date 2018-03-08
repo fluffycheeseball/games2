@@ -9,7 +9,12 @@ import 'rxjs/add/operator/map';
 
 @Injectable()
 export class JigsawService {
+
+    public canvasWidth: number;
+    public canvasHeight: number;
+
     public jigsaw: JigsawPuzzle = new JigsawPuzzle();
+
     public shapeUpXLTR = [35, 2, 3, -2, -18, 30, 30, -18, -2, 3, 2, 35];
     public shapeUpYLTR = [15, -10, -5, -5, -15, 0, 0, 15, 5, 5, 10, -15];
 
@@ -45,14 +50,18 @@ export class JigsawService {
         this.setNodules();
     }
 
+    public SetCanvasDimensions(canvasWidth, canvasHeight) {
+        this.canvasWidth = canvasWidth;
+        this.canvasHeight = canvasHeight;
+    }
+
     public getPieces(basePath: string): JigsawPiece[] {
         const pieces: JigsawPiece[] = [];
         const spacer = 0;
         let i = 0;
         for (let row = 0; row < this.jigsaw.puzzleHeight; ++row) {
             for (let col = 0; col < this.jigsaw.puzzleWidth; ++col) {
-                const intialX = (col * (this.jigsaw.pieceWidth + spacer)) + 0;
-                const initialY = (row * (this.jigsaw.pieceHeight + spacer)) + 0;
+
                 const id = 'img' + ('000' + col).slice(-3) + '_' + ('000' + row).slice(-3);
                 const piece: JigsawPiece = {
                     id: i++,
@@ -65,7 +74,9 @@ export class JigsawService {
                 piece.joiningPieces = this.GetIdsOfJoiningPieces(row, col, piece.id);
                 const sideProfiles = this.getSideProfiles(piece.GridPosition);
                 piece.topleft = this.getTopLeft(sideProfiles, piece.GridPosition);
-                piece.pattern = this.getPath(row, col, intialX, initialY, sideProfiles);
+                piece.pattern = this.getPath(row, col, sideProfiles);
+                const intialX = (col * (this.jigsaw.pieceWidth + spacer)) + 0;
+                const initialY = (row * (this.jigsaw.pieceHeight + spacer)) + 0;
                 piece.tlCorner = [intialX, initialY];
                 pieces.push(piece);
             }
@@ -120,78 +131,92 @@ export class JigsawService {
         return topLeft;
     }
 
-    public getSidePath(side: string, left: number, top: number, sideShape: string): string {
+    public getSidePath(side: string, offsetX: number, offsetY: number, sideShape: string): string {
         if (sideShape === 'straight') {
-            return this.GetStraightSidePath(side, left, top);
+            return this.GetStraightSidePath(side);
         }
         if (sideShape === undefined) {
             console.log('Error: undefined side shape');
         }
-        const right = left + this.jigsaw.pieceWidth;
-        const bottom = top + this.jigsaw.pieceHeight;
         let coords: number[];
-        switch (side) {
-            case 'top': {
-                coords = sideShape === 'up' ?
-                    this.getPathCoords(this.shapeUpXLTR, this.shapeUpYLTR, left, top) :
-                    this.getPathCoords(this.shapeDownXLTR, this.shapeDownYLTR, left, top);
-                break;
-            }
-            case 'bottom': {
-                coords = sideShape === 'up' ?
-                    this.getPathCoords(this.shapeUpXRTL, this.shapeUpYRTL, right, bottom) :
-                    this.getPathCoords(this.shapeDownXRTL, this.shapeDownYRTL, right, bottom);
-                break;
-            }
-            case 'right': {
-                coords = sideShape === 'right' ?
-                    this.getPathCoords(this.shapeLeftXDownwards, this.shapeLeftYDownwards, right, top) :
-                    this.getPathCoords(this.shapeRightXDownwards, this.shapeRightYDownwards, right, top);
-                break;
-            }
-            case 'left': {
-
-                coords = sideShape === 'left' ?
-                    this.getPathCoords(this.shapeLeftXUpwards, this.shapeLeftYUpwards, left, bottom) :
-                    this.getPathCoords(this.shapeRightXUpwards, this.shapeRightYUpwards, left, bottom);
-                break;
-            }
-        }
-
+        coords = this.getPathCoords( offsetX, offsetY, side, sideShape);
         return this.coordsToString(coords);
     }
 
-    public GetStraightSidePath(side: string, left: number, top: number): string {
-        const right = left + this.jigsaw.pieceWidth;
-        const bottom = top + this.jigsaw.pieceHeight;
+    public GetStraightSidePath(side: string): string {
         if (side === 'top') {
-            return ' L ' + right + ' ' + top;
+            return ' h ' + this.jigsaw.pieceWidth;
         }
         if (side === 'bottom') {
-            return ' L ' + left + ' ' + bottom;
+            return ' h ' + '-' + this.jigsaw.pieceWidth;
         }
         if (side === 'right') {
-            return ' L ' + right + ' ' + bottom;
+            return ' v ' + this.jigsaw.pieceHeight;
         }
         if (side === 'left') {
-            return ' L ' + left + ' ' + top;
+            return ' v ' + '-' + this.jigsaw.pieceHeight;
         }
         console.log('Error: invalid side: ' + side);
         return '';
     }
 
-    public getPathCoords(offsetsX: number[], offsetsY: number[], lastX: number, lastY: number): number[] {
+    public getPathCoords(offsetX: number, offsetY: number, side: string, sideShape: string): number[] {
+
+        let curvePointsX: number[] = [];
+        let curvePointsY: number[] = [];
+        switch (side) {
+            case 'top': {
+                curvePointsX = this.shapeDownXLTR;
+                curvePointsY = this.shapeDownYLTR;
+                if (sideShape === 'up') {
+                    curvePointsX = this.shapeUpXLTR;
+                    curvePointsY = this.shapeUpYLTR;
+                }
+                break;
+            }
+            case 'bottom': {
+                offsetX += this.jigsaw.pieceWidth;
+                offsetY += this.jigsaw.pieceHeight;
+                curvePointsX = this.shapeDownXRTL;
+                curvePointsY = this.shapeDownYRTL;
+                if (sideShape === 'up') {
+                    curvePointsX = this.shapeUpXRTL;
+                    curvePointsY = this.shapeUpYRTL;
+                }
+                break;
+            }
+            case 'right': {
+                offsetX +=  this.jigsaw.pieceWidth;
+                curvePointsX = this.shapeRightXDownwards;
+                curvePointsY = this.shapeRightYDownwards;
+                if (sideShape === 'right') {
+                    curvePointsX = this.shapeLeftXDownwards;
+                    curvePointsY = this.shapeLeftYDownwards;
+                }
+                break;
+            }
+            case 'left': {
+                offsetY += this.jigsaw.pieceHeight;
+                curvePointsX = this.shapeRightXUpwards;
+                curvePointsY = this.shapeRightYUpwards;
+                if (sideShape === 'left') {
+                    curvePointsX = this.shapeLeftXUpwards;
+                    curvePointsY = this.shapeLeftYUpwards;
+                }
+                break;
+            }
+        }
         const p: number[] = new Array();
-        p.push(lastX);
-        p.push(lastY);
+        p.push(offsetX);
+        p.push(offsetY);
         for (let k = 0; k < 12; k++) {
-            lastX = lastX + offsetsX[k];
-            p.push(lastX);
-            lastY = lastY + offsetsY[k];
-            p.push(lastY);
+            offsetX += curvePointsX[k];
+            offsetY += curvePointsY[k];
+            p.push(offsetX);
+            p.push(offsetY);
             if (k > 0 && (k < 11) && (k + 1) % 2 === 0) {
-                p.push(lastX);
-                p.push(lastY);
+                p.push(offsetX);
+                p.push(offsetY);
             }
         }
         return p;
@@ -213,12 +238,15 @@ export class JigsawService {
 
     }
 
-    public getPath(row: number, col: number, left: number, top: number, sideProfiles: string[]): string {
-        let path = 'M ' + Utils.padLeft(left, 4) + ' ' + Utils.padLeft(top, 4);
-        path = path + this.getSidePath('top', left, top, sideProfiles[TOP]);
-        path = path + this.getSidePath('right', left, top, sideProfiles[RIGHT]);
-        path = path + this.getSidePath('bottom', left, top, sideProfiles[BOTTOM]);
-        path = path + this.getSidePath('left', left, top, sideProfiles[LEFT]);
+    public getPath(row: number, col: number, sideProfiles: string[]): string {
+        const spacer = 0;
+        const offsetX = Utils.GetRandomIntInRange(0,500);//'//' (col * (this.jigsaw.pieceWidth + spacer));
+        const offsetY = Utils.GetRandomIntInRange(0,500);//(row * (this.jigsaw.pieceHeight + spacer));
+        let path = 'M ' + Utils.padLeft(offsetX, 4) + ' ' + Utils.padLeft(offsetY, 4);
+        path = path + this.getSidePath('top', offsetX, offsetY, sideProfiles[TOP]);
+        path = path + this.getSidePath('right', offsetX, offsetY, sideProfiles[RIGHT]);
+        path = path + this.getSidePath('bottom', offsetX, offsetY, sideProfiles[BOTTOM]);
+        path = path + this.getSidePath('left', offsetX, offsetY, sideProfiles[LEFT]);
         return path + ' z';
     }
 
