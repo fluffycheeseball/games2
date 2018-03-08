@@ -62,22 +62,21 @@ export class JigsawService {
         for (let row = 0; row < this.jigsaw.puzzleHeight; ++row) {
             for (let col = 0; col < this.jigsaw.puzzleWidth; ++col) {
 
-                const id = 'img' + ('000' + col).slice(-3) + '_' + ('000' + row).slice(-3);
+                //   const id = 'img' + ('000' + col).slice(-3) + '_' + ('000' + row).slice(-3);
                 const piece: JigsawPiece = {
                     id: i++,
-                    topleft: undefined,
+                    topLeft: [0, 0],
                     pattern: undefined,
-                    tlCorner: undefined,
                     GridPosition: [row, col],
-                    joiningPieces: [null, null, null, null]
+                    joiningPieces: [null, null, null, null],
+                    sideAllowance: [0, 0, 0, 0]
                 };
                 piece.joiningPieces = this.GetIdsOfJoiningPieces(row, col, piece.id);
                 const sideProfiles = this.getSideProfiles(piece.GridPosition);
-                piece.topleft = this.getTopLeft(sideProfiles, piece.GridPosition);
+                this.setAllowanceValues(sideProfiles, piece);
                 piece.pattern = this.getPath(row, col, sideProfiles);
                 const intialX = (col * (this.jigsaw.pieceWidth + spacer)) + 0;
                 const initialY = (row * (this.jigsaw.pieceHeight + spacer)) + 0;
-                piece.tlCorner = [intialX, initialY];
                 pieces.push(piece);
             }
         }
@@ -105,30 +104,44 @@ export class JigsawService {
         return joiningIds;
     }
 
-    public getTopLeft(sideProfiles: string[], gridPosition: number[]): number[] {
-
+    public setAllowanceValues(sideProfiles: string[], piece: JigsawPiece) {
         const topLeft = [0, 0];
+        piece.sideAllowance[TOP] = sideProfiles[TOP]  === 'up' ?
+         this.jigsaw.convexAllowance :
+         this.jigsaw.concaveAllowance;
+         piece.sideAllowance[BOTTOM] = sideProfiles[BOTTOM]  === 'up' ?
+         this.jigsaw.concaveAllowance :
+         this.jigsaw.convexAllowance; 
+         piece.sideAllowance[LEFT] = sideProfiles[LEFT]  === 'left' ?
+         this.jigsaw.convexAllowance :
+         this.jigsaw.concaveAllowance;
+         piece.sideAllowance[RIGHT] = sideProfiles[RIGHT]  === 'left' ?
+         this.jigsaw.concaveAllowance :
+         this.jigsaw.convexAllowance;
+
+     //    piece.topLeft[ROW] = (piece.GridPosition[ROW] * -100) + piece.sideAllowance[TOP];
+     //    piece.topLeft[COLUMN] = (piece.GridPosition[COLUMN] * -100) + piece.sideAllowance[LEFT];
         switch (sideProfiles[TOP]) {
             case 'up': {
-                topLeft[ROW] = (gridPosition[ROW] * -100) + 19;
+                piece.topLeft[ROW] = (piece.GridPosition[ROW] * -100) + this.jigsaw.convexAllowance;
                 break;
             }
             case 'down': {
-                topLeft[ROW] = (gridPosition[ROW] * -100) + 8;
+                piece.topLeft[ROW] = (piece.GridPosition[ROW] * -100) + this.jigsaw.concaveAllowance;
                 break;
             }
         }
         switch (sideProfiles[LEFT]) {
             case 'left': {
-                topLeft[COLUMN] = (gridPosition[COLUMN] * -100) + 19;
+                piece.topLeft[COLUMN] = (piece.GridPosition[COLUMN] * -100) + this.jigsaw.convexAllowance;
                 break;
             }
             case 'right': {
-                topLeft[COLUMN] = (gridPosition[COLUMN] * -100) + 8;
+                piece.topLeft[COLUMN] = (piece.GridPosition[COLUMN] * -100) + this.jigsaw.concaveAllowance;
                 break;
             }
         }
-        return topLeft;
+      //  return topLeft;
     }
 
     public getSidePath(side: string, offsetX: number, offsetY: number, sideShape: string): string {
@@ -139,7 +152,7 @@ export class JigsawService {
             console.log('Error: undefined side shape');
         }
         let coords: number[];
-        coords = this.getPathCoords( offsetX, offsetY, side, sideShape);
+        coords = this.getPathCoords(offsetX, offsetY, side, sideShape);
         return this.coordsToString(coords);
     }
 
@@ -186,7 +199,7 @@ export class JigsawService {
                 break;
             }
             case 'right': {
-                offsetX +=  this.jigsaw.pieceWidth;
+                offsetX += this.jigsaw.pieceWidth;
                 curvePointsX = this.shapeRightXDownwards;
                 curvePointsY = this.shapeRightYDownwards;
                 if (sideShape === 'right') {
@@ -240,8 +253,8 @@ export class JigsawService {
 
     public getPath(row: number, col: number, sideProfiles: string[]): string {
         const spacer = 0;
-        const offsetX = Utils.GetRandomIntInRange(0,500);//'//' (col * (this.jigsaw.pieceWidth + spacer));
-        const offsetY = Utils.GetRandomIntInRange(0,500);//(row * (this.jigsaw.pieceHeight + spacer));
+        const offsetX = Utils.GetRandomIntInRange(0, 500); // (col * (this.jigsaw.pieceWidth + spacer));
+        const offsetY = Utils.GetRandomIntInRange(0, 500); // (row * (this.jigsaw.pieceHeight + spacer));
         let path = 'M ' + Utils.padLeft(offsetX, 4) + ' ' + Utils.padLeft(offsetY, 4);
         path = path + this.getSidePath('top', offsetX, offsetY, sideProfiles[TOP]);
         path = path + this.getSidePath('right', offsetX, offsetY, sideProfiles[RIGHT]);

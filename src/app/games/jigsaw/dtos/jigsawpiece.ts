@@ -1,8 +1,8 @@
 export interface JigsawPiece {
    id: number;
-   topleft: number[];
+   topLeft: number[];
    GridPosition: number[];
    pattern: string;
-   tlCorner: number[];
    joiningPieces?: number[];
+   sideAllowance: number[];
 }

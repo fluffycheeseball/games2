@@ -3,5 +3,7 @@
 "pieceWidth" :100,
 "pieceHeight" :100,
 "puzzleWidth" :5,
-"imageUrl": "assets/images/test2.png"
+"imageUrl": "assets/images/test2.png",
+"concaveAllowance": 8,
+"convexAllowance": 19
 }
