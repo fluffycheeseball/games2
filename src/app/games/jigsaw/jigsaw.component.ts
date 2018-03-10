@@ -103,7 +103,8 @@ export class JigsawComponent implements OnInit {
           }
 
           let isJoined = false;
-          let result = pointInSvgPolygon.isInside([pieceRight, yOff], testPiece.pattern);
+          let result = canvas._objects[i].containsPoint(new fabric.Point(pieceRight, yOff));
+         // let result = pointInSvgPolygon.isInside([pieceRight, yOff], testPiece.pattern);
           if (result === true && piece.joiningPieces[RIGHT] === testPiece.id) {
             console.log('j join ' + piece.id + ' to left of ' + testPiece.id);
             options.target.setLeft(options.target.canvas._objects[i].left - options.target.width + 27 + 1);
@@ -113,17 +114,21 @@ export class JigsawComponent implements OnInit {
             isJoined = true;
           }
 
-          result = pointInSvgPolygon.isInside([options.target.left, yOff], testPiece.pattern);
+         // result = pointInSvgPolygon.isInside([options.target.left, yOff], testPiece.pattern);
+          result = canvas._objects[i].containsPoint(new fabric.Point(options.target.left, yOff));
           if (result === true && piece.joiningPieces[LEFT] === testPiece.id) {
             console.log('j join ' + piece.id + ' to right of ' + testPiece.id);
-            options.target.setLeft(canvas._objects[i].left  + canvas._objects[i].width - 27 -1);
+            console.log(options.target.left);
+            options.target.setLeft(canvas._objects[i].left  + canvas._objects[i].width - 27 - 1);
             options.target.setCoords();
+            console.log(options.target.left);
             options.target.setTop(canvas._objects[i].top + testPiece.sideAllowance[TOP] - piece.sideAllowance[TOP]);
             options.target.setCoords();
             isJoined = true;
           }
 
-          result = pointInSvgPolygon.isInside([xOff, options.target.top], testPiece.pattern);
+          result = canvas._objects[i].containsPoint(new fabric.Point(xOff, options.target.top));
+     //     result = pointInSvgPolygon.isInside([xOff, options.target.top], testPiece.pattern);
           if (result === true && piece.joiningPieces[TOP] === testPiece.id) {
             console.log('j join ' + piece.id + ' to bottom of ' + testPiece.id);
             options.target.setTop(canvas._objects[i].top  + canvas._objects[i].height - 27 -1 );
@@ -133,7 +138,8 @@ export class JigsawComponent implements OnInit {
             isJoined = true;
           }
 
-          result = pointInSvgPolygon.isInside([xOff, pieceBottom], testPiece.pattern);
+          result = canvas._objects[i].containsPoint(new fabric.Point(xOff, pieceBottom));
+      //    result = pointInSvgPolygon.isInside([xOff, pieceBottom], testPiece.pattern);
           if (result === true && piece.joiningPieces[BOTTOM] === testPiece.id) {
             console.log('j join ' + piece.id + ' to top of ' + testPiece.id);
             options.target.setTop(canvas._objects[i].top - options.target.height + 27  + 1);
@@ -144,10 +150,10 @@ export class JigsawComponent implements OnInit {
           }
 
           if (isJoined) {
-            const group = new fabric.Group([canvas._objects[i], options.target], {});
-            canvas.add(group);
-            canvas.remove(options.target.canvas._objects[i]);
-            canvas.remove(options.target);
+          //  const group = new fabric.Group([canvas._objects[i], options.target], {});
+         //   canvas.add(group);
+         //   canvas.remove(options.target.canvas._objects[i]);
+        //    canvas.remove(options.target);
             break;
           }
         }
