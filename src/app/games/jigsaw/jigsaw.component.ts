@@ -73,10 +73,10 @@ export class JigsawComponent implements OnInit {
         const xOff = options.e.clientX - options.target.canvas._offset.left;
         const result = pointInSvgPolygon.isInside([xOff, yOff], piece.pattern);
         if (result === true) {
-   //       console.log('piece ' + piece.id + ' locked');
+          //       console.log('piece ' + piece.id + ' locked');
         }
       } else {
-   //     console.log('no piece clicked');
+        //     console.log('no piece clicked');
       }
     });
     // this has to be inline - we cannot pass options to an angular method
@@ -85,59 +85,73 @@ export class JigsawComponent implements OnInit {
 
       // check if we need to joint to another piece
       if (!Utils.IsNullOrUndefined(options.target) && !Utils.IsNullOrUndefined(options.target.grpieceidRow)) {
-        const piece = options.target.grpieceidRow;
 
-        const yOff = options.e.clientY - options.target.canvas._offset.top;
-        const xOff = options.e.clientX - options.target.canvas._offset.left;
-    //    console.log('target l,t ' +  options.target.left + ', ' + options.target.top);
-    //    console.log('target r,b ' +  (options.target.left + options.target.width) + ', ' + (options.target.top + options.target.height);
+        const piece = options.target.grpieceidRow;
+        const canvas = options.target.canvas;
+
+        const yOff = options.e.clientY - canvas._offset.top;
+        const xOff = options.e.clientX - canvas._offset.left;
         const pointInSvgPolygon = require('point-in-svg-polygon');
-        // check for a right/left join
+
         // is the right side of the target piece within 20 pixels of the left side of its matching piece 
- const pieceRight = options.target.left + options.target.width;
-        for (let i = 0; i < this.pieces.length; i++) {
-          const result = pointInSvgPolygon.isInside([pieceRight, yOff], this.pieces[i].pattern);
-          if (result === true) {
-            if (piece.joiningPieces[RIGHT] === i) {
-              console.log('j join ' + piece.id + 'to left of ' + i);
-              break;
-            }
+        const pieceRight = options.target.left + options.target.width;
+        const pieceBottom = options.target.top + options.target.height;
+        for (let i = 0; i < options.target.canvas._objects.length; i++) {
+          const testPiece = options.target.canvas._objects[i].grpieceidRow;
+          if (testPiece === undefined) {
+            continue;
           }
-        }
-        for (let i = 0; i < this.pieces.length; i++) {
-          const result = pointInSvgPolygon.isInside([options.target.left, yOff], this.pieces[i].pattern);
-          if (result === true) {
-            if (piece.joiningPieces[LEFT] === i) {
-              console.log('j join ' + piece.id + 'to right of ' + i);
-              break;
-            }
+
+          let isJoined = false;
+          let result = pointInSvgPolygon.isInside([pieceRight, yOff], testPiece.pattern);
+          if (result === true && piece.joiningPieces[RIGHT] === testPiece.id) {
+            console.log('j join ' + piece.id + ' to left of ' + testPiece.id);
+            options.target.setLeft(options.target.canvas._objects[i].left - options.target.width + 27 + 1);
+            options.target.setCoords();
+            options.target.setTop(canvas._objects[i].top + testPiece.sideAllowance[TOP] - piece.sideAllowance[TOP]);
+            options.target.setCoords();
+            isJoined = true;
           }
-        }
-        for (let i = 0; i < this.pieces.length; i++) {
-          const result = pointInSvgPolygon.isInside([xOff, options.target.top], this.pieces[i].pattern);
-          if (result === true) {
-            if (piece.joiningPieces[TOP] === i) {
-              console.log('j join ' + piece.id + 'to bottom of ' + i);
-              break;
-            }
+
+          result = pointInSvgPolygon.isInside([options.target.left, yOff], testPiece.pattern);
+          if (result === true && piece.joiningPieces[LEFT] === testPiece.id) {
+            console.log('j join ' + piece.id + ' to right of ' + testPiece.id);
+            options.target.setLeft(canvas._objects[i].left  + canvas._objects[i].width - 27 -1);
+            options.target.setCoords();
+            options.target.setTop(canvas._objects[i].top + testPiece.sideAllowance[TOP] - piece.sideAllowance[TOP]);
+            options.target.setCoords();
+            isJoined = true;
           }
-        }
-        const pieceBottom = options.target.top+ options.target.height;
-        for (let i = 0; i < this.pieces.length; i++) {
-          const result = pointInSvgPolygon.isInside([xOff, pieceBottom], this.pieces[i].pattern);
-          if (result === true) {
-            if (piece.joiningPieces[BOTTOM] === i) {
-              console.log('j join ' + piece.id + 'to top of ' + i);
-              break;
-            }
+
+          result = pointInSvgPolygon.isInside([xOff, options.target.top], testPiece.pattern);
+          if (result === true && piece.joiningPieces[TOP] === testPiece.id) {
+            console.log('j join ' + piece.id + ' to bottom of ' + testPiece.id);
+            options.target.setTop(canvas._objects[i].top  + canvas._objects[i].height - 27 -1 );
+            options.target.setCoords();
+            options.target.setLeft(canvas._objects[i].left + testPiece.sideAllowance[LEFT] - piece.sideAllowance[LEFT]);
+            options.target.setCoords();
+            isJoined = true;
+          }
+
+          result = pointInSvgPolygon.isInside([xOff, pieceBottom], testPiece.pattern);
+          if (result === true && piece.joiningPieces[BOTTOM] === testPiece.id) {
+            console.log('j join ' + piece.id + ' to top of ' + testPiece.id);
+            options.target.setTop(canvas._objects[i].top - options.target.height + 27  + 1);
+            options.target.setCoords();
+            options.target.setLeft(canvas._objects[i].left + testPiece.sideAllowance[LEFT] - piece.sideAllowance[LEFT]);
+            options.target.setCoords();
+            isJoined = true;
+          }
+
+          if (isJoined) {
+            const group = new fabric.Group([canvas._objects[i], options.target], {});
+            canvas.add(group);
+            canvas.remove(options.target.canvas._objects[i]);
+            canvas.remove(options.target);
+            break;
           }
         }
       }
-
-      // mark unlocked
-      this.jigsawPuzzle.lockX = null;
-      this.jigsawPuzzle.lockY = null;
-
     });
   }
 
@@ -157,8 +171,8 @@ export class JigsawComponent implements OnInit {
           const patternSourceCanvas = new fabric.StaticCanvas();
           patternSourceCanvas.add(img);
           const pattern = new fabric.Pattern({
-            offsetX: this.pieces[r].topleft[COLUMN],
-            offsetY: this.pieces[r].topleft[ROW],
+            offsetX: this.pieces[r].topLeft[COLUMN],
+            offsetY: this.pieces[r].topLeft[ROW],
             repeat: 'no-repeat',
             source: function () {
               patternSourceCanvas.setDimensions({
