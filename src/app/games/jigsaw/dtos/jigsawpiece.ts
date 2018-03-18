@@ -5,4 +5,5 @@ export interface JigsawPiece {
    pattern: string;
    joiningPieces?: number[];
    sideAllowance: number[];
+   tlbr: number[];
 }

@@ -69,7 +69,8 @@ export class JigsawService {
                     pattern: undefined,
                     GridPosition: [row, col],
                     joiningPieces: [null, null, null, null],
-                    sideAllowance: [0, 0, 0, 0]
+                    sideAllowance: [0, 0, 0, 0],
+                    tlbr: [0, 0, 0, 0]
                 };
                 piece.joiningPieces = this.GetIdsOfJoiningPieces(row, col, piece.id);
                 const sideProfiles = this.getSideProfiles(piece.GridPosition);
@@ -106,21 +107,19 @@ export class JigsawService {
 
     public setAllowanceValues(sideProfiles: string[], piece: JigsawPiece) {
         const topLeft = [0, 0];
-        piece.sideAllowance[TOP] = sideProfiles[TOP]  === 'up' ?
-         this.jigsaw.convexAllowance :
-         this.jigsaw.concaveAllowance;
-         piece.sideAllowance[BOTTOM] = sideProfiles[BOTTOM]  === 'up' ?
-         this.jigsaw.concaveAllowance :
-         this.jigsaw.convexAllowance; 
-         piece.sideAllowance[LEFT] = sideProfiles[LEFT]  === 'left' ?
-         this.jigsaw.convexAllowance :
-         this.jigsaw.concaveAllowance;
-         piece.sideAllowance[RIGHT] = sideProfiles[RIGHT]  === 'left' ?
-         this.jigsaw.concaveAllowance :
-         this.jigsaw.convexAllowance;
+        piece.sideAllowance[TOP] = sideProfiles[TOP] === 'up' ?
+            this.jigsaw.convexAllowance :
+            this.jigsaw.concaveAllowance;
+        piece.sideAllowance[BOTTOM] = sideProfiles[BOTTOM] === 'up' ?
+            this.jigsaw.concaveAllowance :
+            this.jigsaw.convexAllowance;
+        piece.sideAllowance[LEFT] = sideProfiles[LEFT] === 'left' ?
+            this.jigsaw.convexAllowance :
+            this.jigsaw.concaveAllowance;
+        piece.sideAllowance[RIGHT] = sideProfiles[RIGHT] === 'left' ?
+            this.jigsaw.concaveAllowance :
+            this.jigsaw.convexAllowance;
 
-     //    piece.topLeft[ROW] = (piece.GridPosition[ROW] * -100) + piece.sideAllowance[TOP];
-     //    piece.topLeft[COLUMN] = (piece.GridPosition[COLUMN] * -100) + piece.sideAllowance[LEFT];
         switch (sideProfiles[TOP]) {
             case 'up': {
                 piece.topLeft[ROW] = (piece.GridPosition[ROW] * -100) + this.jigsaw.convexAllowance;
@@ -141,7 +140,6 @@ export class JigsawService {
                 break;
             }
         }
-      //  return topLeft;
     }
 
     public getSidePath(side: string, offsetX: number, offsetY: number, sideShape: string): string {

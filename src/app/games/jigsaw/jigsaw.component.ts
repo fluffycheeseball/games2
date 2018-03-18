@@ -66,106 +66,135 @@ export class JigsawComponent implements OnInit {
 
     this.canvas.on('mouse:down', function (options) {
 
-      const pointInSvgPolygon = require('point-in-svg-polygon');
-      if (!Utils.IsNullOrUndefined(options.target) && !Utils.IsNullOrUndefined(options.target.grpieceidRow)) {
-        const piece = options.target.grpieceidRow;
+      if (!Utils.IsNullOrUndefined(options.target) && !Utils.IsNullOrUndefined(options.target.piece)) {
+        const piece = options.target.piece;
         const yOff = options.e.clientY - options.target.canvas._offset.top;
         const xOff = options.e.clientX - options.target.canvas._offset.left;
-        const result = pointInSvgPolygon.isInside([xOff, yOff], piece.pattern);
-        if (result === true) {
-          //       console.log('piece ' + piece.id + ' locked');
-        }
-      } else {
-        //     console.log('no piece clicked');
       }
     });
     // this has to be inline - we cannot pass options to an angular method
     this.canvas.on('mouse:up', function (options) {
-      
-      
-      function   joinToRightSide(ePiece : JigsawPiece, testPiece: JigsawPiece, canvasObject: any) { // <-- inner function
-        console.log('j join ' + ePiece.id + ' to right of ' + testPiece.id);
-        options.target.setLeft(canvasObject.left + canvasObject.width - 27 - 1);
-        options.target.setTop(canvasObject.top + testPiece.sideAllowance[TOP] - ePiece.sideAllowance[TOP]);
-        options.target.setCoords();
-        console.log('test'); // <-- use variables from outer scope
+      const movingObj = options.target;
+      let isJoined = false;
+
+      function joinToRightSide(ePiece: JigsawPiece, testObj: any) {
+        console.log('j join ' + ePiece.id + ' to right of ' + testObj.piece.id);
+        movingObj.setLeft(testObj.piece.tlbr[RIGHT] - 27 - 1);
+        movingObj.setTop(testObj.piece.tlbr[TOP] + testObj.piece.sideAllowance[TOP] - ePiece.sideAllowance[TOP]);
+        isJoined = true;
       }
 
-      function   joinToLeftSide(ePiece: JigsawPiece, testPiece: JigsawPiece, canvasObject: any) { // <-- inner function
-        console.log('j join ' + ePiece.id + ' to left of ' + testPiece.id);
-        options.target.setLeft(canvasObject.left - options.target.width + 27 + 1);
-        options.target.setTop(canvasObject.top + testPiece.sideAllowance[TOP] - ePiece.sideAllowance[TOP]);
-        options.target.setCoords();
+      function joinToLeftSide(ePiece: JigsawPiece, testObj: any) {
+        console.log('j join ' + ePiece.id + ' to left of ' + testObj.piece.id);
+        movingObj.setLeft(testObj.piece.tlbr[LEFT] - movingObj.width + 27 + 1);
+        movingObj.setTop(testObj.piece.tlbr[TOP] + testObj.piece.sideAllowance[TOP] - ePiece.sideAllowance[TOP]);
+        isJoined = true;
       }
-      function   joinToTopSide(ePiece : JigsawPiece, testPiece: JigsawPiece, canvasObject: any) { // <-- inner function
-        console.log('j join ' + ePiece.id + ' to top of ' + testPiece.id);
-        options.target.setTop(canvasObject.top - options.target.height + 27 + 1);
-        options.target.setLeft(canvasObject.left + testPiece.sideAllowance[LEFT] - ePiece.sideAllowance[LEFT]);
-        options.target.setCoords();
+      function joinToTopSide(ePiece: JigsawPiece, testObj: any) {
+        console.log('j join ' + ePiece.id + ' to top of ' + testObj.piece.id);
+        movingObj.setTop(testObj.piece.tlbr[TOP] - movingObj.height + 27 + 1);
+        movingObj.setLeft(testObj.piece.tlbr[LEFT] + testObj.piece.sideAllowance[LEFT] - ePiece.sideAllowance[LEFT]);
+        isJoined = true;
       }
-      function   joinToBottomSide(ePiece : JigsawPiece, testPiece: JigsawPiece, canvasObject: any) { // <-- inner function
-        console.log('j join ' + ePiece.id + ' to bottom of ' + testPiece.id);
-        options.target.setTop(canvasObject.top + canvasObject.height - 27 - 1);
-        options.target.setLeft(canvasObject.left + testPiece.sideAllowance[LEFT] - ePiece.sideAllowance[LEFT]);
-        options.target.setCoords();
-      }    
-      // this has to be in line - the javascript lib
+      function joinToBottomSide(ePiece: JigsawPiece, testObj: any) {
+        console.log('j join ' + ePiece.id + ' to bottom of ' + testObj.piece.id);
+        movingObj.setTop(testObj.piece.tlbr[BOTTOM] - 27 - 1);
+        movingObj.setLeft(testObj.piece.tlbr[LEFT] + testObj.piece.sideAllowance[LEFT] - ePiece.sideAllowance[LEFT]);
+        isJoined = true;
+      }
 
-      // check if we need to joint to another piece
-      if (!Utils.IsNullOrUndefined(options.target) && !Utils.IsNullOrUndefined(options.target.grpieceidRow)) {
-
-        const piece = options.target.grpieceidRow;
-        const canvas = options.target.canvas;
-
+      // check if we need to join to another piece
+      if (!Utils.IsNullOrUndefined(movingObj) && !Utils.IsNullOrUndefined(movingObj.piece)) {
+        const piece = movingObj.piece;
+        const canvas = movingObj.canvas;
+        let testObj: any;
         const yOff = options.e.clientY - canvas._offset.top;
         const xOff = options.e.clientX - canvas._offset.left;
-        const pointInSvgPolygon = require('point-in-svg-polygon');
+        const pieceLeft = movingObj.left;
+        const pieceTop = movingObj.top;
+        const pieceRight = movingObj.left + movingObj.width;
+        const pieceBottom = movingObj.top + movingObj.height;
 
-        // is the right side of the target piece within 20 pixels of the left side of its matching piece 
-        const pieceRight = options.target.left + options.target.width;
-        const pieceBottom = options.target.top + options.target.height;
-       
-        for (let i = 0; i < options.target.canvas._objects.length; i++) {
-          
-          console.log('is group? ' + canvas._objects[i]._objects) ;
-          if ( canvas._objects[i]._objects !== undefined && canvas._objects[i]._objects !== null) {
-            for (let j = 0; j < canvas._objects[i]._objects.length; j++) {
-              
-              console.log('child: ' + canvas._objects[i]._objects[j].grpieceidRow.id);
+        for (let i = 0; i < canvas._objects.length; i++) {
+
+          if (canvas._objects[i]._objects !== undefined && canvas._objects[i]._objects !== null) {
+            const group = canvas._objects[i];
+            for (let j = 0; j < group._objects.length; j++) {
+              testObj = group._objects[j];
+              const testPieceLeft = group.left + testObj.left + (group.width / 2);
+              const testPieceTop = group.top + testObj.top + (group.height / 2);
+              const testPieceRight = testPieceLeft + testObj.width;
+              const testPieceBottom = testPieceTop + testObj.height;
+
+              const testRect = new fabric.Rect({
+                width: testObj.width, height: testObj.height,
+                left: testPieceLeft, top: testPieceTop
+              });
+              canvas.add(testRect);
+
+              if (testRect.containsPoint(new fabric.Point(pieceRight, yOff)) === true
+                && piece.joiningPieces[RIGHT] === testObj.piece.id) {
+                joinToLeftSide(piece, testObj);
+              }
+              if (testRect.containsPoint(new fabric.Point(pieceLeft, yOff)) === true
+                && piece.joiningPieces[LEFT] === testObj.piece.id) {
+                joinToRightSide(piece, testObj);
+              }
+
+              if (testRect.containsPoint(new fabric.Point(xOff, pieceTop)) === true
+                && piece.joiningPieces[TOP] === testObj.piece.id) {
+                joinToBottomSide(piece, testObj);
+              }
+
+              if (testRect.containsPoint(new fabric.Point(xOff, pieceBottom)) === true
+                && piece.joiningPieces[BOTTOM] === testObj.piece.id) {
+                joinToTopSide(piece, testObj);
+              }
+              canvas.remove(testRect);
+
+              if (isJoined) {
+                movingObj.setCoords();
+                movingObj.piece.tlbr = [movingObj.top, movingObj.left, (movingObj.top + movingObj.height), (movingObj.left + movingObj.width)];
+                console.log('add to group');
+                //    group.addWithUpdate(testObj);
+                // const group = new fabric.Group([canvas._objects[i], options.target], {});
+                // canvas.add(group);
+                //                canvas.remove(options.target.canvas._objects[i]);
+                // canvas.remove(options.target);
+                break;
+              }
+            }
+
+          } else {  // test piece is not in a group
+
+            testObj = canvas._objects[i];
+            if (testObj.piece === undefined) { // not a jigsaw piece - some other canvas object 
+              continue;
+            }
+
+            if (testObj.containsPoint(new fabric.Point(pieceRight, yOff)) === true
+              && piece.joiningPieces[RIGHT] === testObj.piece.id) {
+              joinToLeftSide(piece, testObj);
+            }
+
+            if (testObj.containsPoint(new fabric.Point(pieceLeft, yOff)) === true
+              && piece.joiningPieces[LEFT] === testObj.piece.id) {
+              joinToRightSide(piece, testObj);
+            }
+
+            if (testObj.containsPoint(new fabric.Point(xOff, pieceTop)) === true
+              && piece.joiningPieces[TOP] === testObj.piece.id) {
+              joinToBottomSide(piece, testObj);
+            }
+
+            if (testObj.containsPoint(new fabric.Point(xOff, pieceBottom)) === true
+              && piece.joiningPieces[BOTTOM] === testObj.piece.id) {
+              joinToTopSide(piece, testObj);
             }
           }
-
-          
-          const testPiece = options.target.canvas._objects[i].grpieceidRow;
-          if (testPiece === undefined) {
-            continue;
-          }
-          let isJoined = false;
-          let result = canvas._objects[i].containsPoint(new fabric.Point(pieceRight, yOff));
-          if (result === true && piece.joiningPieces[RIGHT] === testPiece.id) {
-            joinToLeftSide(piece, testPiece, canvas._objects[i]);
-            isJoined = true;
-          }
-
-          result = canvas._objects[i].containsPoint(new fabric.Point(options.target.left, yOff));
-          if (result === true && piece.joiningPieces[LEFT] === testPiece.id) {
-            joinToRightSide(piece, testPiece, canvas._objects[i]);
-            isJoined = true;
-          }
-
-          result = canvas._objects[i].containsPoint(new fabric.Point(xOff, options.target.top));
-          if (result === true && piece.joiningPieces[TOP] === testPiece.id) {
-            joinToBottomSide(piece, testPiece, canvas._objects[i]);
-            isJoined = true;
-          }
-
-          result = canvas._objects[i].containsPoint(new fabric.Point(xOff, pieceBottom));
-          if (result === true && piece.joiningPieces[BOTTOM] === testPiece.id) {
-            joinToTopSide(piece, testPiece, canvas._objects[i]);
-            isJoined = true;
-          }
-
           if (isJoined) {
+            movingObj.setCoords();
+            movingObj.piece.tlbr = [movingObj.top, movingObj.left, (movingObj.top + movingObj.height), (movingObj.left + movingObj.width)];
             const group = new fabric.Group([canvas._objects[i], options.target], {});
             canvas.add(group);
             canvas.remove(options.target.canvas._objects[i]);
@@ -174,6 +203,7 @@ export class JigsawComponent implements OnInit {
           }
         }
       }
+
     });
   }
 
@@ -184,7 +214,7 @@ export class JigsawComponent implements OnInit {
     for (let r = 0; r < total; r++) {
 
       const mypath = new this.customPath(this.pieces[r].pattern,
-        { grpieceidRow: this.pieces[r] }
+        { piece: this.pieces[r] }
       );
       mypath.hasControls = false;
       mypath.hasBorders = false;
@@ -206,9 +236,8 @@ export class JigsawComponent implements OnInit {
           });
           mypath.fill = pattern;
           this.canvas.add(mypath);
-          mypath.on('mouse:down', function (options) {
-            console.log('piece down');
-          });
+          mypath.piece.tlbr = [mypath.top, mypath.left, (mypath.top + mypath.height), (mypath.left + mypath.width)];
+          console.log('piece id: ' + mypath.piece.id + ', tlbr: ' + mypath.piece.tlbr);
         });
     }
   }
