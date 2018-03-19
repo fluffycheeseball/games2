@@ -66,6 +66,9 @@ export class JigsawComponent implements OnInit {
 
     this.canvas.on('mouse:down', function (options) {
 
+      console.log('movign group?');
+      console.log(options.target);
+
       if (!Utils.IsNullOrUndefined(options.target) && !Utils.IsNullOrUndefined(options.target.piece)) {
         const piece = options.target.piece;
         const yOff = options.e.clientY - options.target.canvas._offset.top;
@@ -74,7 +77,10 @@ export class JigsawComponent implements OnInit {
     });
     // this has to be inline - we cannot pass options to an angular method
     this.canvas.on('mouse:up', function (options) {
-      const movingObj = options.target;
+
+      let movingObj: any;
+      const movingGrp = options._objects;
+      let canvas: any;
       let isJoined = false;
 
       function joinToRightSide(ePiece: JigsawPiece, testObj: any) {
@@ -103,10 +109,43 @@ export class JigsawComponent implements OnInit {
         isJoined = true;
       }
 
+      function movingAGroup() {
+        return !Utils.IsNullOrUndefined(options.target._objects) && options.target._objects.length > 0;
+      }
+
+      function movingAPiece() {
+        return !Utils.IsNullOrUndefined(options.target) && !Utils.IsNullOrUndefined(options.target.piece);
+      }
+
+
+      // 4 scenarios
+      // piece moved over another piece
+      // piece moved over a group
+      // group moved over a piece
+      // group moved over another group
+
+      //
+    //  if (!Utils.IsNullOrUndefined(options.target._objects) && options.target._objects.length > 0) {
+       if (movingAGroup())  {
+        console.log('moving a group' + options.target._objects.length);
+        canvas = options.target.canvas;
+        const yOff = options.e.clientY - canvas._offset.top;
+        const xOff = options.e.clientX - canvas._offset.left;
+
+        for (let i = 0; i < options.target._objects.length; i++) {
+          movingObj = options.target._objects[i];
+          console.log(movingObj.piece.id);
+
+        }
+      }
+
       // check if we need to join to another piece
-      if (!Utils.IsNullOrUndefined(movingObj) && !Utils.IsNullOrUndefined(movingObj.piece)) {
+      // if (!Utils.IsNullOrUndefined(options.target) && !Utils.IsNullOrUndefined(options.target.piece)) {
+       if (movingAPiece()) {
+      console.log('moving a single piece');
+        movingObj = options.target;
         const piece = movingObj.piece;
-        const canvas = movingObj.canvas;
+        canvas = movingObj.canvas;
         let testObj: any;
         const yOff = options.e.clientY - canvas._offset.top;
         const xOff = options.e.clientX - canvas._offset.left;
@@ -114,6 +153,7 @@ export class JigsawComponent implements OnInit {
         const pieceTop = movingObj.top;
         const pieceRight = movingObj.left + movingObj.width;
         const pieceBottom = movingObj.top + movingObj.height;
+
 
         for (let i = 0; i < canvas._objects.length; i++) {
 
@@ -125,7 +165,6 @@ export class JigsawComponent implements OnInit {
               const testPieceTop = group.top + testObj.top + (group.height / 2);
               const testPieceRight = testPieceLeft + testObj.width;
               const testPieceBottom = testPieceTop + testObj.height;
-
               const testRect = new fabric.Rect({
                 width: testObj.width, height: testObj.height,
                 left: testPieceLeft, top: testPieceTop
@@ -200,6 +239,9 @@ export class JigsawComponent implements OnInit {
             canvas.remove(options.target.canvas._objects[i]);
             canvas.remove(options.target);
             break;
+          } else {
+            console.log('piece not joined');
+            movingObj.piece.tlbr = [movingObj.top, movingObj.left, (movingObj.top + movingObj.height), (movingObj.left + movingObj.width)];
           }
         }
       }
@@ -237,7 +279,6 @@ export class JigsawComponent implements OnInit {
           mypath.fill = pattern;
           this.canvas.add(mypath);
           mypath.piece.tlbr = [mypath.top, mypath.left, (mypath.top + mypath.height), (mypath.left + mypath.width)];
-          console.log('piece id: ' + mypath.piece.id + ', tlbr: ' + mypath.piece.tlbr);
         });
     }
   }
