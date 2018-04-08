@@ -70,7 +70,14 @@ export class JigsawService {
                     GridPosition: [row, col],
                     joiningPieces: [null, null, null, null],
                     sideAllowance: [0, 0, 0, 0],
-                    tlbr: [0, 0, 0, 0]
+                    left: 0,
+                    top: 0,
+                    right: 0,
+                    bottom: 0,
+                    width: 0,
+                    height: 0,
+                    middle: 0,
+                    centre: 0
                 };
                 piece.joiningPieces = this.GetIdsOfJoiningPieces(row, col, piece.id);
                 const sideProfiles = this.getSideProfiles(piece.GridPosition);
@@ -108,18 +115,17 @@ export class JigsawService {
     public setAllowanceValues(sideProfiles: string[], piece: JigsawPiece) {
         const topLeft = [0, 0];
         piece.sideAllowance[TOP] = sideProfiles[TOP] === 'up' ?
-            this.jigsaw.convexAllowance :
-            this.jigsaw.concaveAllowance;
+            this.jigsaw.convexAllowance : sideProfiles[TOP] === 'down' ?
+                this.jigsaw.concaveAllowance : 0;
         piece.sideAllowance[BOTTOM] = sideProfiles[BOTTOM] === 'up' ?
-            this.jigsaw.concaveAllowance :
-            this.jigsaw.convexAllowance;
+            this.jigsaw.concaveAllowance : sideProfiles[TOP] === 'down' ?
+                this.jigsaw.convexAllowance : 0;
         piece.sideAllowance[LEFT] = sideProfiles[LEFT] === 'left' ?
-            this.jigsaw.convexAllowance :
-            this.jigsaw.concaveAllowance;
+            this.jigsaw.convexAllowance : sideProfiles[LEFT] === 'right' ?
+                this.jigsaw.concaveAllowance : 0;
         piece.sideAllowance[RIGHT] = sideProfiles[RIGHT] === 'left' ?
-            this.jigsaw.concaveAllowance :
-            this.jigsaw.convexAllowance;
-
+            this.jigsaw.concaveAllowance : sideProfiles[RIGHT] === 'right' ?
+                this.jigsaw.convexAllowance : 0;
         switch (sideProfiles[TOP]) {
             case 'up': {
                 piece.topLeft[ROW] = (piece.GridPosition[ROW] * -100) + this.jigsaw.convexAllowance;
@@ -143,177 +149,177 @@ export class JigsawService {
     }
 
     public getSidePath(side: string, offsetX: number, offsetY: number, sideShape: string): string {
-        if (sideShape === 'straight') {
-            return this.GetStraightSidePath(side);
-        }
-        if (sideShape === undefined) {
-            console.log('Error: undefined side shape');
-        }
-        let coords: number[];
-        coords = this.getPathCoords(offsetX, offsetY, side, sideShape);
-        return this.coordsToString(coords);
+    if (sideShape === 'straight') {
+        return this.GetStraightSidePath(side);
     }
+    if (sideShape === undefined) {
+        console.log('Error: undefined side shape');
+    }
+    let coords: number[];
+    coords = this.getPathCoords(offsetX, offsetY, side, sideShape);
+    return this.coordsToString(coords);
+}
 
     public GetStraightSidePath(side: string): string {
-        if (side === 'top') {
-            return ' h ' + this.jigsaw.pieceWidth;
-        }
-        if (side === 'bottom') {
-            return ' h ' + '-' + this.jigsaw.pieceWidth;
-        }
-        if (side === 'right') {
-            return ' v ' + this.jigsaw.pieceHeight;
-        }
-        if (side === 'left') {
-            return ' v ' + '-' + this.jigsaw.pieceHeight;
-        }
-        console.log('Error: invalid side: ' + side);
-        return '';
+    if (side === 'top') {
+        return ' h ' + this.jigsaw.pieceWidth;
     }
+    if (side === 'bottom') {
+        return ' h ' + '-' + this.jigsaw.pieceWidth;
+    }
+    if (side === 'right') {
+        return ' v ' + this.jigsaw.pieceHeight;
+    }
+    if (side === 'left') {
+        return ' v ' + '-' + this.jigsaw.pieceHeight;
+    }
+    console.log('Error: invalid side: ' + side);
+    return '';
+}
 
     public getPathCoords(offsetX: number, offsetY: number, side: string, sideShape: string): number[] {
 
-        let curvePointsX: number[] = [];
-        let curvePointsY: number[] = [];
-        switch (side) {
-            case 'top': {
-                curvePointsX = this.shapeDownXLTR;
-                curvePointsY = this.shapeDownYLTR;
-                if (sideShape === 'up') {
-                    curvePointsX = this.shapeUpXLTR;
-                    curvePointsY = this.shapeUpYLTR;
-                }
-                break;
+    let curvePointsX: number[] = [];
+    let curvePointsY: number[] = [];
+    switch (side) {
+        case 'top': {
+            curvePointsX = this.shapeDownXLTR;
+            curvePointsY = this.shapeDownYLTR;
+            if (sideShape === 'up') {
+                curvePointsX = this.shapeUpXLTR;
+                curvePointsY = this.shapeUpYLTR;
             }
-            case 'bottom': {
-                offsetX += this.jigsaw.pieceWidth;
-                offsetY += this.jigsaw.pieceHeight;
-                curvePointsX = this.shapeDownXRTL;
-                curvePointsY = this.shapeDownYRTL;
-                if (sideShape === 'up') {
-                    curvePointsX = this.shapeUpXRTL;
-                    curvePointsY = this.shapeUpYRTL;
-                }
-                break;
-            }
-            case 'right': {
-                offsetX += this.jigsaw.pieceWidth;
-                curvePointsX = this.shapeRightXDownwards;
-                curvePointsY = this.shapeRightYDownwards;
-                if (sideShape === 'right') {
-                    curvePointsX = this.shapeLeftXDownwards;
-                    curvePointsY = this.shapeLeftYDownwards;
-                }
-                break;
-            }
-            case 'left': {
-                offsetY += this.jigsaw.pieceHeight;
-                curvePointsX = this.shapeRightXUpwards;
-                curvePointsY = this.shapeRightYUpwards;
-                if (sideShape === 'left') {
-                    curvePointsX = this.shapeLeftXUpwards;
-                    curvePointsY = this.shapeLeftYUpwards;
-                }
-                break;
-            }
+            break;
         }
-        const p: number[] = new Array();
+        case 'bottom': {
+            offsetX += this.jigsaw.pieceWidth;
+            offsetY += this.jigsaw.pieceHeight;
+            curvePointsX = this.shapeDownXRTL;
+            curvePointsY = this.shapeDownYRTL;
+            if (sideShape === 'up') {
+                curvePointsX = this.shapeUpXRTL;
+                curvePointsY = this.shapeUpYRTL;
+            }
+            break;
+        }
+        case 'right': {
+            offsetX += this.jigsaw.pieceWidth;
+            curvePointsX = this.shapeRightXDownwards;
+            curvePointsY = this.shapeRightYDownwards;
+            if (sideShape === 'right') {
+                curvePointsX = this.shapeLeftXDownwards;
+                curvePointsY = this.shapeLeftYDownwards;
+            }
+            break;
+        }
+        case 'left': {
+            offsetY += this.jigsaw.pieceHeight;
+            curvePointsX = this.shapeRightXUpwards;
+            curvePointsY = this.shapeRightYUpwards;
+            if (sideShape === 'left') {
+                curvePointsX = this.shapeLeftXUpwards;
+                curvePointsY = this.shapeLeftYUpwards;
+            }
+            break;
+        }
+    }
+    const p: number[] = new Array();
+    p.push(offsetX);
+    p.push(offsetY);
+    for (let k = 0; k < 12; k++) {
+        offsetX += curvePointsX[k];
+        offsetY += curvePointsY[k];
         p.push(offsetX);
         p.push(offsetY);
-        for (let k = 0; k < 12; k++) {
-            offsetX += curvePointsX[k];
-            offsetY += curvePointsY[k];
+        if (k > 0 && (k < 11) && (k + 1) % 2 === 0) {
             p.push(offsetX);
             p.push(offsetY);
-            if (k > 0 && (k < 11) && (k + 1) % 2 === 0) {
-                p.push(offsetX);
-                p.push(offsetY);
-            }
         }
-        return p;
     }
+    return p;
+}
 
     public coordsToString(coords: number[]) {
-        let str = '';
+    let str = '';
 
-        for (let i = 0; i < coords.length; i++) {
-            if (i % 6 === 0) {
-                str = str + ' C ';
-            } else {
-                str = str + ',';
-            }
-            str = str + (coords[i]).toString();
+    for (let i = 0; i < coords.length; i++) {
+        if (i % 6 === 0) {
+            str = str + ' C ';
+        } else {
+            str = str + ',';
         }
-
-        return str;
-
+        str = str + (coords[i]).toString();
     }
+
+    return str;
+
+}
 
     public getPath(row: number, col: number, sideProfiles: string[]): string {
-        const spacer = 0;
-        const offsetX = Utils.GetRandomIntInRange(0, 500); // (col * (this.jigsaw.pieceWidth + spacer));
-        const offsetY = Utils.GetRandomIntInRange(0, 500); // (row * (this.jigsaw.pieceHeight + spacer));
-        let path = 'M ' + Utils.padLeft(offsetX, 4) + ' ' + Utils.padLeft(offsetY, 4);
-        path = path + this.getSidePath('top', offsetX, offsetY, sideProfiles[TOP]);
-        path = path + this.getSidePath('right', offsetX, offsetY, sideProfiles[RIGHT]);
-        path = path + this.getSidePath('bottom', offsetX, offsetY, sideProfiles[BOTTOM]);
-        path = path + this.getSidePath('left', offsetX, offsetY, sideProfiles[LEFT]);
-        return path + ' z';
-    }
+    const spacer = 0;
+    const offsetX = Utils.GetRandomIntInRange(0, 500); // (col * (this.jigsaw.pieceWidth + spacer));
+    const offsetY = Utils.GetRandomIntInRange(0, 500); // (row * (this.jigsaw.pieceHeight + spacer));
+    let path = 'M ' + Utils.padLeft(offsetX, 4) + ' ' + Utils.padLeft(offsetY, 4);
+    path = path + this.getSidePath('top', offsetX, offsetY, sideProfiles[TOP]);
+    path = path + this.getSidePath('right', offsetX, offsetY, sideProfiles[RIGHT]);
+    path = path + this.getSidePath('bottom', offsetX, offsetY, sideProfiles[BOTTOM]);
+    path = path + this.getSidePath('left', offsetX, offsetY, sideProfiles[LEFT]);
+    return path + ' z';
+}
 
     public getSideProfiles(gridPosition: number[]): string[] {
-        const sideProfiles = ['', '', '', ''];
-        sideProfiles[TOP] = this.getSideShape('top', gridPosition[ROW], gridPosition[COLUMN]);
-        sideProfiles[BOTTOM] = this.getSideShape('bottom', gridPosition[ROW], gridPosition[COLUMN]);
-        sideProfiles[LEFT] = this.getSideShape('left', gridPosition[ROW], gridPosition[COLUMN]);
-        sideProfiles[RIGHT] = this.getSideShape('right', gridPosition[ROW], gridPosition[COLUMN]);
-        return sideProfiles;
-    }
+    const sideProfiles = ['', '', '', ''];
+    sideProfiles[TOP] = this.getSideShape('top', gridPosition[ROW], gridPosition[COLUMN]);
+    sideProfiles[BOTTOM] = this.getSideShape('bottom', gridPosition[ROW], gridPosition[COLUMN]);
+    sideProfiles[LEFT] = this.getSideShape('left', gridPosition[ROW], gridPosition[COLUMN]);
+    sideProfiles[RIGHT] = this.getSideShape('right', gridPosition[ROW], gridPosition[COLUMN]);
+    return sideProfiles;
+}
     public setNodules() {
-        this.jigsaw.horizontals = new Array();
-        this.jigsaw.verticals = new Array();
+    this.jigsaw.horizontals = new Array();
+    this.jigsaw.verticals = new Array();
 
-        const numVerticalJoins = (this.jigsaw.puzzleWidth - 1) * this.jigsaw.puzzleHeight;
-        for (let col = 0; col < numVerticalJoins; col++) {
-            const noduleType = Utils.getRandomBoolean() === true ? 'left' : 'right';
-            this.jigsaw.verticals.push(noduleType);
-        }
-        const numHorizontalJoins = (this.jigsaw.puzzleHeight - 1) * this.jigsaw.puzzleWidth;
-        for (let row = 0; row < numHorizontalJoins; row++) {
-            const noduleType = Utils.getRandomBoolean() === true ? 'up' : 'down';
-            this.jigsaw.horizontals.push(noduleType);
-        }
+    const numVerticalJoins = (this.jigsaw.puzzleWidth - 1) * this.jigsaw.puzzleHeight;
+    for (let col = 0; col < numVerticalJoins; col++) {
+        const noduleType = Utils.getRandomBoolean() === true ? 'left' : 'right';
+        this.jigsaw.verticals.push(noduleType);
     }
+    const numHorizontalJoins = (this.jigsaw.puzzleHeight - 1) * this.jigsaw.puzzleWidth;
+    for (let row = 0; row < numHorizontalJoins; row++) {
+        const noduleType = Utils.getRandomBoolean() === true ? 'up' : 'down';
+        this.jigsaw.horizontals.push(noduleType);
+    }
+}
 
     public getSideShape(side: string, row: number, col: number): string {
-        switch (side) {
-            case 'top':
-                {
-                    if (row === 0) {
-                        return 'straight';
-                    }
-                    return this.jigsaw.horizontals[((row - 1) * this.jigsaw.puzzleHeight) + col];
+    switch (side) {
+        case 'top':
+            {
+                if (row === 0) {
+                    return 'straight';
                 }
-            case 'left':
-                {
-                    if (col === 0) { return 'straight'; }
-                    return this.jigsaw.verticals[((col - 1) * this.jigsaw.puzzleWidth) + row];
-                }
-            case 'right':
-                {
-                    if (col === this.jigsaw.puzzleWidth - 1) { return 'straight'; }
-                    return this.jigsaw.verticals[(col * this.jigsaw.puzzleWidth) + row];
-                }
-            case 'bottom':
-                {
-                    if (row === this.jigsaw.puzzleHeight - 1) { return 'straight'; }
-                    return this.jigsaw.horizontals[(row * this.jigsaw.puzzleHeight) + col];
-                }
-            default:
-                {
-                    console.log('Error: invalid side: ' + side);
-                }
-        }
+                return this.jigsaw.horizontals[((row - 1) * this.jigsaw.puzzleHeight) + col];
+            }
+        case 'left':
+            {
+                if (col === 0) { return 'straight'; }
+                return this.jigsaw.verticals[((col - 1) * this.jigsaw.puzzleWidth) + row];
+            }
+        case 'right':
+            {
+                if (col === this.jigsaw.puzzleWidth - 1) { return 'straight'; }
+                return this.jigsaw.verticals[(col * this.jigsaw.puzzleWidth) + row];
+            }
+        case 'bottom':
+            {
+                if (row === this.jigsaw.puzzleHeight - 1) { return 'straight'; }
+                return this.jigsaw.horizontals[(row * this.jigsaw.puzzleHeight) + col];
+            }
+        default:
+            {
+                console.log('Error: invalid side: ' + side);
+            }
     }
+}
 }
 
