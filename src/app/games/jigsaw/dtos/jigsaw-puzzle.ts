@@ -3,6 +3,7 @@ export class JigsawPuzzle {
     public puzzleHeight: number;
     public pieceWidth: number;
     public pieceHeight: number;
+    // piece nodule directions  set in code
     public verticals: string[];
     public horizontals: string[];
     public imageUrl: string;

@@ -2,6 +2,17 @@
 
 This project was generated with [Angular CLI](https://github.com/angular/angular-cli) version 1.5.0.
 
+It uses [fabricjs](http://fabricjs.com) to extend functionality of HTML5 canvas.
+
+Games included are:
+
+Decoder: Players guess the hidden sequence
+Jigsaw:
+
+See the readme file for each game for more details
+
+
+
 ## Development server
 
 Run `ng serve` for a dev server. Navigate to `http://localhost:4200/`. The app will automatically reload if you change any of the source files.
