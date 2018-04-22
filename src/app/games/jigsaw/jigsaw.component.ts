@@ -71,11 +71,11 @@ export class JigsawComponent implements OnInit {
     // this has to be inline - we cannot pass options to an angular method
     this.canvas.on('mouse:up', function (options) {
       let movingObj: any;
-      let movingGrp: any;
+      let movingGroup: any;
       let canvas: any;
       let isJoined = false;
       let piece: JigsawPiece;
-      let testObj: any;
+      let testObject: any;
 
       if (Utils.IsNullOrUndefined(options.target)) {
         return;
@@ -86,107 +86,46 @@ export class JigsawComponent implements OnInit {
       // group moved over a piece
       // group moved over another group
       if (movingAGroup()) {
-        movingGrp = options.target;
-        canvas = movingGrp.canvas;
-        const groupIds = getGroupPieceIds(movingGrp);
-        let joinedToPiece = false;
-
-        for (let k = 0; k < movingGrp._objects.length; k++) {
-          movingObj = movingGrp._objects[k];
+        movingGroup = options.target;
+        canvas = movingGroup.canvas;
+        for (let k = 0; k < movingGroup._objects.length; k++) {
+          movingObj = movingGroup._objects[k];
           piece = movingObj.piece;
-          checkObjectHasPiece(piece, 'test 3');
-          setPieceCoords(
-            (movingObj.left + (movingGrp.width / 2) + movingGrp.left),
-            (movingObj.top + (movingGrp.height / 2) + movingGrp.top));
+          setPieceCoords(piece,
+            (movingObj.left + (movingGroup.width / 2) + movingGroup.left),
+            (movingObj.top + (movingGroup.height / 2) + movingGroup.top));
 
           for (let i = 0; i < canvas._objects.length; i++) {
             const testGroup = canvas._objects[i];
             let testPiece: JigsawPiece;
 
-            let ids = getGroupPieceIds(movingGrp);
-            let tstids = getGroupPieceIds(testGroup);
-            if (tstids.indexOf(ids[0]) >= 0) {
-              console.log('no test saME GROUp')
+            if (testGroupIsAlsoMovingGroup(movingGroup, testGroup)) {
               continue;
             }
             if (isAGroup(testGroup)) {
-              console.log('moved group - over test group t');
-
               for (let j = 0; j < testGroup._objects.length; j++) {
-                testObj = testGroup._objects[j];
-                testPiece = testObj.piece;
-                const testRect = getTestRectangle(testPiece);
-                canvas.add(testRect);
-                checkObjectHasPiece(testPiece, 'test 4');
-                checkObjectHasPiece(piece, 'test 5');
-                const res = checkConnections2(testRect, piece, testPiece);
-                canvas.remove(testRect);
-
-                if (!Utils.IsNullOrUndefined(res)) {
-                  console.log('joining groups');
-                  let yy: number[];
-                  yy = getTopLeftOffset(res, piece, testPiece);
-                  const items = movingGrp.getObjects();
-                  const testItems = testGroup.getObjects();
-                  movingGrp.destroy();
-                  testGroup.destroy();
-                  displayCanvasCount(canvas._objects.length);
-                  canvas.remove(movingGrp);
-                  canvas.remove(testGroup);
-                  for (let item = 0; item < items.length; item++) {
-                    items[item].left -= yy[LEFT];
-                    items[item].top -= yy[TOP];
-                    items[item].setCoords();
-                  }
-                  for(let tstItemId = 0; tstItemId < testItems.length; tstItemId++) 
-                  {
-                    items.push(testItems[tstItemId]);
-                  }
-                  const newGroup = new fabric.Group(items, {});
-                  canvas.add(newGroup);
-                  displayCanvasCount(canvas._objects.length);
-                  canvas.renderAll();
-            //      displayPieceCoords(piece);
-                  joinedToPiece = true;
+                testPiece = testGroup._objects[j].piece;
+                const sideToJoinTo = getSideToJoinTo(piece, testPiece);
+                if (!Utils.IsNullOrUndefined(sideToJoinTo)) {
+                  joinTwoGroups(sideToJoinTo, movingGroup, testGroup, piece, testPiece, canvas);
+                  isJoined = true;
                   break;
                 }
               }
             } else {
-              testObj = canvas._objects[i];
-              testPiece = testObj.piece;
-              checkObjectHasPiece(testPiece, 'test');
-
-              const res = checkConnections2(testObj, piece, testPiece);
-
-              if (!Utils.IsNullOrUndefined(res)) {
-                let yy: number[];
-                yy = getTopLeftOffset(res, piece, testPiece);
-                const items = movingGrp.getObjects();
-                movingGrp.destroy();
-                displayCanvasCount(canvas._objects.length);
-                canvas.remove(movingGrp);
-                canvas.remove(testObj);
-                for (let item = 0; item < items.length; item++) {
-                  items[item].left -= yy[LEFT];
-                  items[item].top -= yy[TOP];
-                  items[item].setCoords();
+              testObject = canvas._objects[i];
+              testPiece = testObject.piece;
+              const sideToJoinTo = checkConnections2(testObject, piece, testPiece);
+              if (!Utils.IsNullOrUndefined(sideToJoinTo)) {
+                joinGroupToAPiece(sideToJoinTo, movingGroup, canvas, testObject, piece); {
+                  isJoined = true;
+                  break;
                 }
-                items.push(testObj);
-                const newGroup = new fabric.Group(items, {});
-                canvas.add(newGroup);
-                displayCanvasCount(canvas._objects.length);
-                canvas.renderAll();
-                displayPieceCoords(piece);
-                joinedToPiece = true;
-                break;
               }
             }
-          }
-          if (joinedToPiece) {
-            break;
-          }
-          if (isJoined) {
-            break;
+            if (isJoined) {
+              break;
+            }
           }
         }
       }
@@ -195,14 +134,13 @@ export class JigsawComponent implements OnInit {
         piece = movingObj.piece;
         checkObjectHasPiece(piece, 'test 2');
         canvas = movingObj.canvas;
-        setPieceCoords(movingObj.left, movingObj.top);
+        setPieceCoords(piece,movingObj.left, movingObj.top);
 
         for (let i = 0; i < canvas._objects.length; i++) {
           const testGroup = canvas._objects[i];
           if (isAGroup(testGroup)) {
-            console.log('moved piece is over a group');
             for (let j = 0; j < testGroup._objects.length; j++) {
-              testObj = testGroup._objects[j];
+              testObject = testGroup._objects[j];
               const testPiece = testGroup._objects[j].piece;
               checkObjectHasPiece(testPiece, 'test');
               const testRect = getTestRectangle(testPiece);
@@ -210,17 +148,17 @@ export class JigsawComponent implements OnInit {
               checkConnections(testRect, piece, testPiece);
               canvas.remove(testRect);
               if (isJoined) {
-                pieceJoinedToGroupCanvasUpdate(testGroup);
+                pieceJoinedToGroupCanvasUpdate(testGroup, piece);
                 break;
               }
             }
           } else {  // test piece is not in a group
-            testObj = canvas._objects[i];
-            const testPiece = testObj.piece;
+            testObject = canvas._objects[i];
+            const testPiece = testObject.piece;
             checkObjectHasPiece(testPiece, 'test');
-            checkConnections(testObj, piece, testPiece);
+            checkConnections(testObject, piece, testPiece);
             if (isJoined) {
-              pieceJoinedToPieceCanvsUpdate();
+              pieceJoinedToPieceCanvsUpdate(piece);
               break;
             }
           }
@@ -231,35 +169,96 @@ export class JigsawComponent implements OnInit {
         return !Utils.IsNullOrUndefined(options.target._objects) && options.target._objects.length > 0;
       }
 
-      function displayCanvasCount(len: number) {
-        console.log('num objects on canvas: ' + len);
+      function removeGroup(_group: any, _canvas: fabric.Canvas) {
+        _group.destroy();
+        _canvas.remove(_group);
       }
 
-      function pieceJoinedToPieceCanvsUpdate() {
-        movingObj.setCoords();
-        setPieceCoords(movingObj.left, movingObj.top);
-        canvas.add(new fabric.Group([movingObj, testObj], {}));
-        canvas.remove(movingObj);
-        canvas.remove(testObj);
+      function createNewGroup(_canvasObjects: any, _canvas: fabric.Canvas) {
+        const newGroup = new fabric.Group(_canvasObjects, {});
+        newGroup.hasControls = false;
+        newGroup.hasBorders = false;
+        _canvas.add(newGroup);
+        _canvas.renderAll();
       }
 
-      function pieceJoinedToGroupCanvasUpdate(testGroup: any) {
-        movingObj.setCoords();
-        setPieceCoords(movingObj.left, movingObj.top);
+      function joinTwoGroups(_sideToJoinTo: number, _movingGroup: any, _testGroup: any, _piece: JigsawPiece, _testPiece: JigsawPiece, _canvas: fabric.Canvas) {
+        const topLeftOffsets = getTopLeftOffset(_sideToJoinTo, _piece, _testPiece);
+        const movingObjects = _movingGroup.getObjects();
+        const testObjects = _testGroup.getObjects();
+        removeGroup(_movingGroup, _canvas);
+        removeGroup(_testGroup, _canvas);
+        applyOffsetToMovingObjects(movingObjects, topLeftOffsets);
+        addTestObjectsToMovingObjects(movingObjects, testObjects);
+        createNewGroup(movingObjects, _canvas);
+      }
 
-        const items = testGroup.getObjects();
-        testGroup.destroy();
-        canvas.remove(testGroup);
-        canvas.remove(movingObj);
-        items.push(movingObj);
-        for (let item = 0; item < items.length; item++) {
-          canvas.add(items[item]);
+      function joinGroupToAPiece(_sideToJoinTo: number, _movingGroup: any, _canvas: fabric.Canvas, _testObject: any, _piece: JigsawPiece) {
+        const movingObjects = _movingGroup.getObjects();
+        removeGroup(_movingGroup, _canvas);
+        canvas.remove(_testObject);
+        applyOffsetToMovingObjects(movingObjects, getTopLeftOffset(_sideToJoinTo, _piece, _testObject.piece));
+        movingObjects.push(_testObject);
+        createNewGroup(movingObjects, canvas);
+      }
+
+      function addTestObjectsToMovingObjects(_movingObjects, _testObjects) {
+        for (let tstItemId = 0; tstItemId < _testObjects.length; tstItemId++) {
+          _movingObjects.push(_testObjects[tstItemId]);
         }
-        canvas.renderAll();
-        const newGroup = new fabric.Group(items, {});
+      }
+
+      function applyOffsetToMovingObjects(_canvasObjects, _topLeftOffsets: number[]) {
+        for (let m = 0; m < _canvasObjects.length; m++) {
+          _canvasObjects[m].left -= _topLeftOffsets[LEFT];
+          _canvasObjects[m].top -= _topLeftOffsets[TOP];
+          _canvasObjects[m].setCoords();
+        }
+      }
+
+      function testGroupIsAlsoMovingGroup(_movingGrp: any, _testGroup: any): boolean {
+        const ids = getGroupPieceIds(_movingGrp);
+        const tstids = getGroupPieceIds(_testGroup);
+        if (tstids.indexOf(ids[0]) >= 0) {
+          return true;
+        }
+        return false;
+      }
+
+      function getSideToJoinTo(_piece: JigsawPiece, _testPiece: JigsawPiece): number {
+        const testRect = getTestRectangle(_testPiece);
+        canvas.add(testRect);
+        const result = checkConnections2(testRect, piece, _testPiece);
+        canvas.remove(testRect);
+        return result;
+      }
+
+      function pieceJoinedToPieceCanvsUpdate(_piece:JigsawPiece) {
+        movingObj.setCoords();
+        setPieceCoords(_piece,movingObj.left, movingObj.top);
+        const newGroup = new fabric.Group([movingObj, testObject], {});
+        newGroup.hasControls = false;
+        newGroup.hasBorders = false;
         canvas.add(newGroup);
-        for (let item = 0; item < items.length; item++) {
-          canvas.remove(items[item]);
+
+        canvas.remove(movingObj);
+        canvas.remove(testObject);
+      }
+
+      function pieceJoinedToGroupCanvasUpdate(testGroup: any, _piece:JigsawPiece) {
+        movingObj.setCoords();
+        setPieceCoords(_piece,movingObj.left, movingObj.top);
+
+        const testObjects = testGroup.getObjects();
+        removeGroup(testGroup, canvas);
+        canvas.remove(movingObj);
+        testObjects.push(movingObj);
+        for (let m = 0; m < testObjects.length; m++) {
+          canvas.add(testObjects[m]);
+        }
+        createNewGroup(testObjects, canvas);
+        for (let item = 0; item < testObjects.length; item++) {
+          canvas.remove(testObjects[item]);
         }
 
       }
@@ -269,6 +268,7 @@ export class JigsawComponent implements OnInit {
           console.log('null or undefined piece: ' + str);
         }
       }
+
       function getGroupPieceIds(grp: any): number[] {
         const groupIds: number[] = [];
         if (Utils.IsNullOrUndefined(grp._objects)) {
@@ -284,24 +284,19 @@ export class JigsawComponent implements OnInit {
 
       function checkConnections(tstRect: fabric.Rect, ePiece: JigsawPiece, tstPiece: JigsawPiece) {
         if (ePiece.id === tstPiece.id) {
+          console.log('same piece');
           return;
         }
-        if (tstRect.containsPoint(new fabric.Point(ePiece.right, ePiece.middle)) === true
-          && ePiece.joiningPieces[RIGHT] === tstPiece.id) {
+        if (isOverLeftSide(tstRect, ePiece, tstPiece)) {
           joinToLeftSide(ePiece, tstPiece);
         }
-        if (tstRect.containsPoint(new fabric.Point(ePiece.left, ePiece.middle)) === true
-          && ePiece.joiningPieces[LEFT] === tstPiece.id) {
+        if (isOverRightSide(tstRect, ePiece, tstPiece)) {
           joinToRightSide(ePiece, tstPiece);
         }
-
-        if (tstRect.containsPoint(new fabric.Point(ePiece.centre, ePiece.top)) === true
-          && ePiece.joiningPieces[TOP] === tstPiece.id) {
+        if (isOverBottomSide(tstRect, ePiece, tstPiece)) {
           joinToBottomSide(ePiece, tstPiece);
         }
-
-        if (tstRect.containsPoint(new fabric.Point(ePiece.centre, ePiece.bottom)) === true
-          && ePiece.joiningPieces[BOTTOM] === tstPiece.id) {
+        if (isOverTopSide(tstRect, ePiece, tstPiece)) {
           joinToTopSide(ePiece, tstPiece);
         }
       }
@@ -327,8 +322,6 @@ export class JigsawComponent implements OnInit {
       }
 
       function checkConnections2(tstRect: fabric.Rect, ePiece: JigsawPiece, tstPiece: JigsawPiece): number {
-        checkObjectHasPiece(ePiece, 'test 44');
-        checkObjectHasPiece(tstPiece, 'test 55');
         if (ePiece.id === tstPiece.id) {
           return;
         }
@@ -338,17 +331,13 @@ export class JigsawComponent implements OnInit {
         if (isOverLeftSide(tstRect, ePiece, tstPiece)) {
           return LEFT;
         }
-
-
         if (isOverBottomSide(tstRect, ePiece, tstPiece)) {
           return BOTTOM;
         }
-
         if (isOverTopSide(tstRect, ePiece, tstPiece)) {
           return TOP;
         }
         return null;
-
       }
 
       function getTopLeftOffset(joinToSide: number, ePiece: JigsawPiece, tstPiece: JigsawPiece): number[] {
@@ -381,18 +370,13 @@ export class JigsawComponent implements OnInit {
         return offsets;
       }
 
-      function setPieceCoords(pieceLeft: number, pieceTop: number) {
-        piece.top = pieceTop;
-        piece.left = pieceLeft;
-        piece.right = pieceLeft + piece.width;
-        piece.bottom = piece.top + piece.height;
-        piece.middle = piece.top + (piece.height / 2);
-        piece.centre = piece.left + (piece.width / 2);
-      }
-
-      function displayPieceCoords(thePiece: JigsawPiece) {
-        console.log('TLBR')
-        console.log(thePiece.top + ' , ' + thePiece.left + ' , ' + thePiece.bottom + ' , ' + thePiece.right)
+      function setPieceCoords(_piece: JigsawPiece, _pieceLeft: number, _pieceTop: number) {
+        _piece.top = _pieceTop;
+        _piece.left = _pieceLeft;
+        _piece.right = _piece.left + _piece.width;
+        _piece.bottom = _piece.top + _piece.height;
+        _piece.middle = _piece.top + (_piece.height / 2);
+        _piece.centre = _piece.left + (_piece.width / 2);
       }
 
       function getTestRectangle(aPiece: JigsawPiece): fabric.Rect {
@@ -414,26 +398,22 @@ export class JigsawComponent implements OnInit {
       }
 
       function joinToRightSide(ePiece: JigsawPiece, tstPiece: JigsawPiece) {
-        console.log('j join ' + ePiece.id + ' to right of ' + tstPiece.id);
         movingObj.setLeft(tstPiece.right - tstPiece.sideAllowance[RIGHT] - ePiece.sideAllowance[LEFT]);
         movingObj.setTop(tstPiece.top + tstPiece.sideAllowance[TOP] - ePiece.sideAllowance[TOP]);
         isJoined = true;
       }
 
       function joinToLeftSide(ePiece: JigsawPiece, tstPiece: JigsawPiece) {
-        console.log('j join ' + ePiece.id + ' to left of ' + tstPiece.id);
         movingObj.setLeft(tstPiece.left - ePiece.width + ePiece.sideAllowance[RIGHT] + tstPiece.sideAllowance[LEFT]);
         movingObj.setTop(tstPiece.top + tstPiece.sideAllowance[TOP] - ePiece.sideAllowance[TOP]);
         isJoined = true;
       }
       function joinToTopSide(ePiece: JigsawPiece, tstPiece: JigsawPiece) {
-        console.log('j join ' + ePiece.id + ' to top of ' + tstPiece.id);
         movingObj.setTop(tstPiece.top - ePiece.height + ePiece.sideAllowance[BOTTOM] + tstPiece.sideAllowance[TOP]);
         movingObj.setLeft(tstPiece.left + tstPiece.sideAllowance[LEFT] - ePiece.sideAllowance[LEFT]);
         isJoined = true;
       }
       function joinToBottomSide(ePiece: JigsawPiece, tstPiece: JigsawPiece) {
-        console.log('j join ' + ePiece.id + ' to bottom of ' + tstPiece.id);
         movingObj.setTop(tstPiece.bottom - tstPiece.sideAllowance[BOTTOM] - ePiece.sideAllowance[TOP]);
         movingObj.setLeft(tstPiece.left + tstPiece.sideAllowance[LEFT] - ePiece.sideAllowance[LEFT]);
         isJoined = true;
