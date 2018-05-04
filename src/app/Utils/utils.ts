@@ -6,6 +6,13 @@ export class Utils {
         return false;
     }
 
+    public static HasValue(item: any): boolean {
+        if (item !== null && item !== undefined) {
+            return true;
+        }
+        return false;
+    }
+
     public static getRandomBoolean(): boolean {
         const a = new Uint8Array(1);
         crypto.getRandomValues(a);

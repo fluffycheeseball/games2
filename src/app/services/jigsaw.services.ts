@@ -1,6 +1,5 @@
-import { JigsawPuzzle } from './../games/jigsaw/dtos/jigsaw-puzzle';
 import { Utils } from './../Utils/utils';
-import { JigsawPiece } from './../games/jigsaw/dtos/jigsawpiece';
+import { JigsawPuzzle, JigsawPiece } from './../games/jigsaw/dtos';
 import { ROW, TOP, LEFT, COLUMN, BOTTOM, RIGHT } from './../games/constants';
 import { Injectable } from '@angular/core';
 import { Observable } from 'rxjs/Observable';
@@ -9,9 +8,6 @@ import 'rxjs/add/operator/map';
 
 @Injectable()
 export class JigsawService {
-
-    public canvasWidth: number;
-    public canvasHeight: number;
 
     public jigsaw: JigsawPuzzle = new JigsawPuzzle();
 
@@ -49,12 +45,7 @@ export class JigsawService {
         this.jigsaw = res;
         this.setNodules();
     }
-
-    public SetCanvasDimensions(canvasWidth, canvasHeight) {
-        this.canvasWidth = canvasWidth;
-        this.canvasHeight = canvasHeight;
-    }
-
+    
     public getPieces(basePath: string): JigsawPiece[] {
         const pieces: JigsawPiece[] = [];
         const spacer = 0;
