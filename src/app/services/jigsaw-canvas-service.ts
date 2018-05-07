@@ -87,6 +87,7 @@ export class JigsawCanvasService {
   public setUpCanvas() {
     if (Utils.HasValue(this.canvas)) {
       this.removeObjectsFromCanvas(this.canvas._objects);
+      this.canvas.renderAll();
     }
     this.canvas = new fabric.Canvas('canvas', {
       hoverCursor: 'pointer',
@@ -108,24 +109,23 @@ export class JigsawCanvasService {
       return;
     }
     if (this.movingAGroup(options)) {
-      let movingGroup = options.target;
-      for (let i = 0; i < movingGroup._objects.length; i++) {
-        let movingObject = movingGroup._objects[i];
 
-        this.setPieceCoords(movingObject.piece,
-          (movingObject.left + (movingGroup.width / 2) + movingGroup.left),
-          (movingObject.top + (movingGroup.height / 2) + movingGroup.top));
+      let movedGroup = options.target;
+      this.updatePieceCoordsOfMovedGroup(movedGroup);
+
+      for (let i = 0; i < movedGroup._objects.length; i++) {
+        let movedObject = movedGroup._objects[i];
 
         for (let j = 0; j < this.canvas._objects.length; j++) {
           const testObject = this.canvas._objects[j];
-          if (this.testGroupIsAlsoMovingGroup(movingGroup, testObject)) {
+          if (this.testGroupIsAlsoMovingGroup(movedGroup, testObject)) {
             continue;
           }
           let isJoined = false;
           if (this.isAGroup(testObject)) {
-            isJoined = this.CheckAndJoinTwoGroups(movingGroup, testObject, movingObject.piece);
+            isJoined = this.CheckAndJoinTwoGroups(movedGroup, testObject, movedObject.piece);
           } else {
-            isJoined = this.CheckAndJoinGroupToPiece(movingGroup, testObject, movingObject.piece);
+            isJoined = this.CheckAndJoinGroupToPiece(movedGroup, testObject, movedObject.piece);
           }
           if (isJoined) { break; }
         }
@@ -150,32 +150,55 @@ export class JigsawCanvasService {
     return Utils.HasValue(options.target._objects) && options.target._objects.length > 0;
   }
 
-  public CheckAndJoinTwoGroups(movingGroup: any, testGroup: any, piece: JigsawPiece): boolean {
-    for (let i = 0; i < testGroup._objects.length; i++) {
-      let testPiece = testGroup._objects[i].piece;
-      const testRect = this.AddTestRectangleToCanvas(testPiece);
-      const sideToJoinTo = this.getSideToJoinTo(testRect, piece, testPiece);
-      this.removeObjectsFromCanvas([testRect]);
-      if (Utils.HasValue(sideToJoinTo)) {
-        const testObjects = this.breakdownGroupIntoObjects(testGroup);
-        const movingObjects = this.breakdownGroupIntoObjects(movingGroup);
-        this.applyOffsetToMovingObjects(movingObjects, sideToJoinTo, piece, testPiece);
-        this.addTestObjectsToMovingObjects(movingObjects, testObjects);
-        this.createNewGroup(movingObjects);
-        return true;
-      }
+  public updatePieceCoordsOfMovedGroup(movingGroup:any) {
+    for (let i = 0; i < movingGroup._objects.length; i++) {
+      let movingObject = movingGroup._objects[i];
+      this.setPieceCoords(movingObject.piece,
+        (movingObject.left + (movingGroup.width / 2) + movingGroup.left),
+        (movingObject.top + (movingGroup.height / 2) + movingGroup.top));
     }
+  }
+
+  public CheckAndJoinTwoGroups(movingGroup: any, testGroup: any, piece: JigsawPiece): boolean {
+    let testObjects = testGroup.getObjects();
+    testGroup._restoreObjectsState();
+    this.canvas.remove(testGroup);
+    
+    for (let i = 0; i < testObjects.length; i++) {
+      let testPiece = testObjects[i].piece;
+      const sideToJoinTo = this.getSideToJoinTo(testObjects[i], piece, testPiece);
+      if (Utils.HasValue(sideToJoinTo)) {
+        console.log('count1 ' + this.canvas._objects.length)
+      let movedObjects = movingGroup.getObjects();
+      movingGroup._restoreObjectsState();
+      this.canvas.remove(movingGroup);
+        this.applyOffsetToMovingObjects(movedObjects, sideToJoinTo, piece, testPiece);
+        this.addTestObjectsToMovingObjects(movedObjects, testObjects);
+        this.createNewGroup(movedObjects);
+        this.removeObjectsFromCanvas(movedObjects);
+        this.canvas.renderAll();
+    //    console.log('count ' + this.canvas._objects.length)
+        return true;
+      } 
+    }
+    this.createNewGroup(testObjects);
+    this.removeObjectsFromCanvas(testObjects);
+    this.canvas.renderAll();
     return false;
   }
 
   public CheckAndJoinGroupToPiece(movingGroup: any, testObject: any, piece: JigsawPiece): boolean {
     const sideToJoinTo = this.getSideToJoinTo(testObject, piece, testObject.piece);
     if (Utils.HasValue(sideToJoinTo)) {
-      const movingObjects = this.breakdownGroupIntoObjects(movingGroup);
+      let movedObjects = movingGroup.getObjects();
+      movingGroup._restoreObjectsState();
+      this.canvas.remove(movingGroup);
       this.removeObjectsFromCanvas([testObject]);
-      this.applyOffsetToMovingObjects(movingObjects, sideToJoinTo, piece, testObject.piece);
-      movingObjects.push(testObject);
-      this.createNewGroup(movingObjects);
+      this.applyOffsetToMovingObjects(movedObjects, sideToJoinTo, piece, testObject.piece);
+      movedObjects.push(testObject);
+      this.createNewGroup(movedObjects);
+      this.removeObjectsFromCanvas(movedObjects);
+      this.canvas.renderAll();
       return true;
     }
     return false;
@@ -197,11 +220,13 @@ export class JigsawCanvasService {
         this.removeObjectsFromCanvas(testObjects);
         testObjects.push(movingObject);
         this.addObjectsToCanvas(testObjects);
+        this.canvas.renderAll();
         break;
       }
     }
     this.createNewGroup(testObjects);
     this.removeObjectsFromCanvas(testObjects);
+    this.canvas.renderAll();
     return isJoined;
   }
 
@@ -212,6 +237,7 @@ export class JigsawCanvasService {
       this.jumpMovingObjectToJoinPosition(sideToJoinTo, testPiece, movingObject);
       this.createNewGroup([movingObject, testObject]);
       this.removeObjectsFromCanvas([movingObject, testObject]);
+      this.canvas.renderAll();
       return true;
     }
     return false;
@@ -300,32 +326,25 @@ export class JigsawCanvasService {
   }
 
   public removeObjectsFromCanvas(objectsToRemove: any[]) {
-    console.log('canvas objects count before removal')
-    console.log(this.canvas._objects.length);
+  //  console.log('canvas objects count before removal')
+ //   console.log(this.canvas._objects.length);
     for (let i = 0; i < objectsToRemove.length; i++) {
       this.canvas.remove(objectsToRemove[i]);
     }
-    this.canvas.renderAll();
-    console.log('canvas objects count after removal')
-    console.log(this.canvas._objects.length);
+ //   this.canvas.renderAll();
+ //   console.log('canvas objects count after removal')
+//    console.log(this.canvas._objects.length);
   }
 
   public addObjectsToCanvas(objectsToAdd: any[]) {
-    console.log('canvas objects count before add')
-    console.log(this.canvas._objects.length);
+ //   console.log('canvas objects count before add')
+//    console.log(this.canvas._objects.length);
     for (let i = 0; i < objectsToAdd.length; i++) {
       this.canvas.add(objectsToAdd[i]);
     }
-    this.canvas.renderAll();
-    console.log('canvas objects count after add')
-    console.log(this.canvas._objects.length);
-  }
-
-  public breakdownGroupIntoObjects(group: any): any {
-    let groupObjects = group.getObjects();
-    group.destroy();
-    this.removeObjectsFromCanvas([group]);
-    return groupObjects;
+ //   this.canvas.renderAll();
+ //   console.log('canvas objects count after add')
+ //   console.log(this.canvas._objects.length);
   }
 
   public getTopLeftOffset(joinToSide: number, piece: JigsawPiece, testPiece: JigsawPiece): number[] {
@@ -406,6 +425,7 @@ export class JigsawCanvasService {
       left: piece.left, top: piece.top
     });
     this.addObjectsToCanvas([testRect]);
+    this.canvas.renderAll();
     return testRect;
   }
 
