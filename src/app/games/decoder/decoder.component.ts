@@ -1,9 +1,7 @@
-import { Guess } from './dtos/guess';
 import { Component, OnInit, HostListener } from '@angular/core';
-import { Piece } from './dtos/piece';
-import { SSL_OP_SSLREF2_REUSE_CERT_TYPE_BUG } from 'constants';
-import { forEach } from '@angular/router/src/utils/collection';
-import { IconSet } from './dtos/iconSet';
+import { IconsSets } from './iconsets';
+import { Utils } from '../../Utils/utils';
+import { Piece, Guess, GameStatus, IGuess, IconSet } from './dtos';
 
 
 @Component({
@@ -15,53 +13,29 @@ export class DecoderComponent {
   public target: Piece[] = [];
   public src: Piece[] = [];
 
-  public greenTick = 'assets/images/greentick.png';
-  public amberTick = 'assets/images/ambertick.png';
+  public greenTick = 'greentick.png';
+  public amberTick = 'ambertick.png';
+  public blankImage = 'whitespot.png';
 
   public guess: Guess;
-  public prevGuesses: Guess[] = [];
+  public prevGuesses: IGuess[] = [];
   public solution: string[];
   public solutionLength = 4;
   public thetarget: string;
-  public gameComplete;
-  public playerHasWon = false;
-  public playerHasLost = false;
+  public gameStatus: GameStatus;
   public maxGuesses = 10;
   public sourceLength = 8;
   public iconSets: IconSet[];
   public iconSetDirectory = 'emoticons';
+  public baseUrl = 'assets/images/';
 
   constructor() {
-    this.populateIconConfig();
+    this.iconSets = IconsSets;
     this.newGame();
   }
 
-  populateIconConfig() {
-    this.iconSets = [
-      {
-        value: 'emoticons',
-        filePath: 'assets/images/emoticons/src0.png'
-      },
-      {
-        value: 'xmas',
-        filePath: 'assets/images/xmas/src0.png'
-      },
-      {
-        value: 'animals',
-        filePath: 'assets/images/animals/src0.png'
-      },
-      {
-        value: 'flags',
-        filePath: 'assets/images/flags/src0.png'
-      },
-      {
-        value: 'food',
-        filePath: 'assets/images/food/src0.png'
-      }
-    ];
-  }
   resetSource() {
-    let basePath = 'assets/images/' + this.iconSetDirectory +  '/src';
+    const basePath = `${this.baseUrl}${this.iconSetDirectory}/src`;
     this.src = [];
     for (let i = 0; i < this.sourceLength; ++i) {
       const piece: Piece = {
@@ -73,7 +47,7 @@ export class DecoderComponent {
   }
 
   cheat(itemId: string) {
-    let targetIndex: number = this.getTargetIndex(itemId);
+    const targetIndex: number = this.getTargetIndex(itemId);
     for (let i = 0; i < this.sourceLength; ++i) {
       if (this.src[i].filePath === this.solution[targetIndex]) {
         this.target[targetIndex].filePath = this.src[i].filePath;
@@ -95,18 +69,8 @@ export class DecoderComponent {
   }
 
   public getBlankImage(): string {
-    return 'assets/images/whitespot.png';
-  }
-
-  resetGuess() {
-    this.guess = {
-      srcIndexes: [],
-      redCount: '',
-      whiteCount: ''
-    };
-    for (let i = 0; i < this.solutionLength; ++i) {
-      this.guess.srcIndexes[i] = null;
-    }
+    console.log(`${this.baseUrl}${this.blankImage}`);
+    return `${this.baseUrl}${this.blankImage}`;
   }
 
   @HostListener('dragenter', ['$event'])
@@ -143,7 +107,7 @@ export class DecoderComponent {
   }
 
   public srcImageClicked(srcId: string) {
-    if (this.gameComplete) { return; }
+    if (this.gameStatus.gameComplete) { return; }
     const targetIndex = this.guess.srcIndexes.indexOf(null);
     if (targetIndex > -1) {
       this.updateGuess(srcId, targetIndex);
@@ -151,14 +115,14 @@ export class DecoderComponent {
   }
 
   public targetImageClicked(targetId: string) {
-    if (this.gameComplete) { return; }
+    if (this.gameStatus.gameComplete) { return; }
     const targetIndex = this.getTargetIndex(targetId);
     this.guess.srcIndexes[targetIndex] = null;
     this.target[targetIndex].filePath = this.getBlankImage();
   }
 
   public showPrevGuesses(): boolean {
-    return this.prevGuesses != null && this.prevGuesses != undefined && this.prevGuesses.length > 0;
+    return Utils.ArrayHasValue(this.prevGuesses);
   }
 
   public GenerateSolution() {
@@ -209,52 +173,43 @@ export class DecoderComponent {
     this.guess.whiteCount = whiteCount.toString();
     this.updatePreviousGuesses();
     if (redCount >= this.solutionLength) {
-      this.playerHasWon = true;
+      this.gameStatus.playerHasWon = true;
       this.freezeGame();
       return;
     }
     if (this.prevGuesses.length >= this.maxGuesses) {
-      this.playerHasLost = true;
+      this.gameStatus.playerHasLost = true;
       this.freezeGame();
       return;
     }
 
     this.resetTarget();
-    this.resetGuess();
+    this.guess = new Guess(this.solutionLength);
   }
 
   public changeIconSet(item: IconSet) {
-    if(item.value === this.iconSetDirectory)  {
+    if (item.value === this.iconSetDirectory)  {
       return;
     }
     this.iconSetDirectory = item.value;
     this.newGame();
   }
   updatePreviousGuesses() {
-    const guessCopy: Guess = {
-      srcIndexes: [null, null, null, null],
-      redCount: this.guess.redCount,
-      whiteCount: this.guess.whiteCount
-    };
-    for (let i = 0; i < this.solutionLength; ++i) {
-      guessCopy.srcIndexes[i] = this.guess.srcIndexes[i];
-    }
+    const guessCopy = this.guess.clone(this.solutionLength);
     this.prevGuesses.unshift(guessCopy);
   }
 
   newGame() {
+    this.guess = new Guess(this.solutionLength);
+    this.gameStatus = new GameStatus();
     this.prevGuesses = [];
     this.resetSource();
     this.resetTarget();
-    this.resetGuess();
     this.GenerateSolution();
-    this.gameComplete = false;
-    this.playerHasWon = false;
-    this.playerHasLost = false;
   }
 
   freezeGame() {
-    this.gameComplete = true;
+    this.gameStatus.gameComplete = true;
   }
 }
 

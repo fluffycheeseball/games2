@@ -27,6 +27,7 @@
     "core-js": "^2.5.3",
     "fabric": "^1.7.22",
     "font-awesome": "^4.7.0",
+    "ngx-logger": "^3.0.5",
     "point-in-svg-polygon": "^1.0.20",
     "rxjs": "^5.5.6",
     "zone.js": "^0.8.20"
