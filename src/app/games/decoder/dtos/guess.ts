@@ -19,10 +19,10 @@ export class Guess implements IGuess {
     clone(solutionLength: number): Guess {
         const copy = new Guess(solutionLength);
         for (let i = 0; i < solutionLength; i++) {
-            this.srcIndexes.push(this.srcIndexes[i]);
+            copy.srcIndexes[i] = this.srcIndexes[i];
         }
-        this.redCount = this.redCount;
-        this.whiteCount = this.whiteCount;
+        copy.redCount = this.redCount;
+        copy.whiteCount = this.whiteCount;
         return copy;
     }
 }

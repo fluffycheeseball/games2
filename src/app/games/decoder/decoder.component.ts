@@ -13,9 +13,9 @@ export class DecoderComponent {
   public target: Piece[] = [];
   public src: Piece[] = [];
 
-  public greenTick = 'greentick.png';
-  public amberTick = 'ambertick.png';
-  public blankImage = 'whitespot.png';
+  public greenTick: string;
+  public amberTick: string;
+  public blankImage: string;
 
   public guess: Guess;
   public prevGuesses: IGuess[] = [];
@@ -31,6 +31,7 @@ export class DecoderComponent {
 
   constructor() {
     this.iconSets = IconsSets;
+    this.setImagePaths();
     this.newGame();
   }
 
@@ -57,20 +58,22 @@ export class DecoderComponent {
     }
   }
 
+
   resetTarget() {
     this.target = [];
     for (let i = 0; i < this.solutionLength; ++i) {
       const piece: Piece = {
         id: 'target' + i.toString(),
-        filePath: this.getBlankImage()
+        filePath: this.blankImage
       };
       this.target.push(piece);
     }
   }
 
-  public getBlankImage(): string {
-    console.log(`${this.baseUrl}${this.blankImage}`);
-    return `${this.baseUrl}${this.blankImage}`;
+  public setImagePaths() {
+    this.blankImage = `${this.baseUrl}whitespot.png`;
+    this.greenTick = `${this.baseUrl}greentick.png`;
+    this.amberTick = `${this.baseUrl}ambertick.png`;
   }
 
   @HostListener('dragenter', ['$event'])
@@ -118,7 +121,7 @@ export class DecoderComponent {
     if (this.gameStatus.gameComplete) { return; }
     const targetIndex = this.getTargetIndex(targetId);
     this.guess.srcIndexes[targetIndex] = null;
-    this.target[targetIndex].filePath = this.getBlankImage();
+    this.target[targetIndex].filePath = this.blankImage;
   }
 
   public showPrevGuesses(): boolean {
@@ -157,7 +160,7 @@ export class DecoderComponent {
     return (Number(id.substring(6)));
   }
 
-  checkGuess(envent) {
+  checkGuess(event) {
     let redCount = 0;
     let whiteCount = 0;
 
@@ -188,7 +191,7 @@ export class DecoderComponent {
   }
 
   public changeIconSet(item: IconSet) {
-    if (item.value === this.iconSetDirectory)  {
+    if (item.value === this.iconSetDirectory) {
       return;
     }
     this.iconSetDirectory = item.value;
