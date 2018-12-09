@@ -29,7 +29,7 @@ export class JigsawCanvasService {
   public createCanvasPieces(jigsaw: JigsawPuzzle) {
     const total = jigsaw.puzzleWidth * jigsaw.puzzleHeight;
     for (let r = 0; r < total; r++) {
-      let mypath = this.getPath(this.pieces[r], jigsaw);
+      const mypath = this.getPath(this.pieces[r], jigsaw);
       this.setPieceDimensions(mypath.piece, jigsaw, mypath.top, mypath.left);
     }
   }

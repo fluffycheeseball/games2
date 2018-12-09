@@ -17,7 +17,7 @@
                         (ondragover)="onDragOver($event)">
                 </span>
             </span>
-            <button class="btn-primary dropbox" [disabled]="guessComplete()" (click)="checkGuess($event)">
+            <button class="btn-primary dropbox" [disabled]="guessIsComplete" (click)="processGuess($event)">
                 <span class="fa fa-check-square-o"></span>
             </button>
         </div>

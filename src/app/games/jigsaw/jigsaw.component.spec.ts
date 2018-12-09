@@ -8,10 +8,10 @@ import { JigsawCanvasService } from '../../services';
 
 const jigsawPuzzle: JigsawPuzzle = new JigsawPuzzle();
 
-const JigsawServiceStub = <JigsawService> {
+const JigsawServiceStub = <JigsawService>{
 
 };
-const jigsawCanvasServiceStub = <JigsawCanvasService> {
+const jigsawCanvasServiceStub = <JigsawCanvasService>{
 
 };
 
@@ -25,23 +25,24 @@ xdescribe('JigsawComponent', () => {
         JigsawComponent
       ],
       providers: [
-        {provide: JigsawService, useValue: JigsawServiceStub},
-        {provide: JigsawCanvasService, useValue: jigsawCanvasServiceStub}
+        { provide: JigsawService, useValue: JigsawServiceStub },
+        { provide: JigsawCanvasService, useValue: jigsawCanvasServiceStub }
       ],
     }).compileComponents();
 
     fixture = TestBed.overrideComponent(JigsawComponent, {
       set: {
         template: '<span></span>'
-      }})
+      }
+    })
       .createComponent(JigsawComponent);
   }));
 
   beforeEach(() => {
     fixture = TestBed.createComponent(JigsawComponent);
-   component = fixture.debugElement.componentInstance;
+    component = fixture.debugElement.componentInstance;
 
-   fixture.detectChanges();
+    fixture.detectChanges();
   });
 
   it('should create the component', async(() => {

@@ -1,7 +1,8 @@
 import { Component, OnInit, HostListener } from '@angular/core';
 import { IconsSets } from './iconsets';
-import { Utils } from '../../Utils/utils';
 import { Piece, Guess, GameStatus, IGuess, IconSet } from './dtos';
+import { ArrayUtils, Utils, ConsoleLog } from '../../Utils';
+import { LogService } from '../../logging/services/log.service';
 
 
 @Component({
@@ -9,7 +10,7 @@ import { Piece, Guess, GameStatus, IGuess, IconSet } from './dtos';
   templateUrl: './decoder.component.html',
   styleUrls: ['./decoder.component.css']
 })
-export class DecoderComponent {
+export class DecoderComponent implements OnInit {
   public target: Piece[] = [];
   public src: Piece[] = [];
 
@@ -28,10 +29,14 @@ export class DecoderComponent {
   public iconSets: IconSet[];
   public iconSetDirectory = 'emoticons';
   public baseUrl = 'assets/images/';
+  public guessIsComplete = false;
 
-  constructor() {
+  constructor(private logService: LogService) {
     this.iconSets = IconsSets;
     this.setImagePaths();
+  }
+
+  ngOnInit() {
     this.newGame();
   }
 
@@ -57,7 +62,6 @@ export class DecoderComponent {
       }
     }
   }
-
 
   resetTarget() {
     this.target = [];
@@ -91,25 +95,27 @@ export class DecoderComponent {
     event.stopPropagation();
     const srcId = event.srcElement.id;
     const targetIndex = Number(this.thetarget.substring(6));
+    this.logService.debug(`onDrop called with srcId: ${srcId} , targetIndex ${targetIndex}`);
     this.updateGuess(srcId, targetIndex);
   }
 
   public updateGuess(srcId: string, targetIndex: number) {
-
+    this.logService.debug(`updateGuess called with srcId: ${srcId} , targetIndex ${targetIndex}`);
     const srcIndex = this.getSrcIndex(srcId);
     if (this.duplicateDetected(srcIndex)) { return; }
-    this.target[targetIndex].filePath = this.src[srcIndex].filePath;
-    this.guess.srcIndexes[targetIndex] = srcIndex;
+this.guess.srcIndexes[targetIndex] = srcIndex;
+this.target[targetIndex].filePath = this.src[srcIndex].filePath;
   }
 
-  public guessComplete(): boolean {
+  public checkGuessComplete() {
     if (this.guess.srcIndexes.some(p => p === null)) {
-      return true;
+      this.guessIsComplete = true;
     }
-    return false;
+    this.guessIsComplete = false;
   }
 
   public srcImageClicked(srcId: string) {
+    this.logService.debug(`srcImageClicked called with srcId: ${srcId}`);
     if (this.gameStatus.gameComplete) { return; }
     const targetIndex = this.guess.srcIndexes.indexOf(null);
     if (targetIndex > -1) {
@@ -125,14 +131,19 @@ export class DecoderComponent {
   }
 
   public showPrevGuesses(): boolean {
-    return Utils.ArrayHasValue(this.prevGuesses);
+    return ArrayUtils.ArrayHasValue(this.prevGuesses);
   }
 
-  public GenerateSolution() {
+  clearSolution() {
+    this.logService.debug(`clearSolution`);
     this.solution = [];
     for (let i = 0; i < this.solutionLength; ++i) {
       this.solution.push('');
     }
+  }
+
+  populateSolution() {
+    this.logService.debug(`populateSolution`);
     for (let i = 0; i < this.solutionLength; ++i) {
       let isDuplicate = true;
       while (isDuplicate) {
@@ -146,10 +157,12 @@ export class DecoderComponent {
   }
 
   duplicateDetected(srcIndex: number): boolean {
+    let result = false;
     if (this.guess.srcIndexes.indexOf(srcIndex) >= 0) {
-      return true;
+      result = true;
     }
-    return false;
+    this.logService.debug(`duplicateDetected returning ${result}`);
+    return result;
   }
 
   getSrcIndex(id: string): number {
@@ -160,22 +173,10 @@ export class DecoderComponent {
     return (Number(id.substring(6)));
   }
 
-  checkGuess(event) {
-    let redCount = 0;
-    let whiteCount = 0;
-
-    for (let i = 0; i < this.solutionLength; ++i) {
-      const filePathTocheck = this.src[this.guess.srcIndexes[i]].filePath;
-      if (filePathTocheck === this.solution[i]) {
-        redCount++;
-      } else if (this.solution.some(p => p === filePathTocheck)) {
-        whiteCount++;
-      }
-    }
-    this.guess.redCount = redCount.toString();
-    this.guess.whiteCount = whiteCount.toString();
+  processGuess(event) {
+    this.checkGuess();
     this.updatePreviousGuesses();
-    if (redCount >= this.solutionLength) {
+    if (this.guess.redCount >= this.solutionLength) {
       this.gameStatus.playerHasWon = true;
       this.freezeGame();
       return;
@@ -188,6 +189,21 @@ export class DecoderComponent {
 
     this.resetTarget();
     this.guess = new Guess(this.solutionLength);
+  }
+
+  public checkGuess() {
+    let redCount = 0;
+    let whiteCount = 0;
+    for (let i = 0; i < this.solutionLength; ++i) {
+      const filePathTocheck = this.src[this.guess.srcIndexes[i]].filePath;
+      if (filePathTocheck === this.solution[i]) {
+        redCount++;
+      } else if (this.solution.some(p => p === filePathTocheck)) {
+        whiteCount++;
+      }
+    }
+    this.guess.redCount = redCount;
+    this.guess.whiteCount = whiteCount;
   }
 
   public changeIconSet(item: IconSet) {
@@ -203,12 +219,14 @@ export class DecoderComponent {
   }
 
   newGame() {
+    this.logService.debug(`newGame`);
     this.guess = new Guess(this.solutionLength);
     this.gameStatus = new GameStatus();
     this.prevGuesses = [];
     this.resetSource();
     this.resetTarget();
-    this.GenerateSolution();
+    this.clearSolution();
+    this.populateSolution();
   }
 
   freezeGame() {

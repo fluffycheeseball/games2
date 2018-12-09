@@ -14,6 +14,7 @@ import { Angular2FontawesomeModule } from 'angular2-fontawesome/angular2-fontawe
 import { ProfileComponent } from './user/profile/profile.component';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { LoggerModule, NgxLoggerLevel } from 'ngx-logger';
+import { LoggingModule } from './logging/logging.module';
 
 const appRoutes: Routes = [
   { path: 'games/decoder', component: DecoderComponent },
@@ -34,6 +35,7 @@ const appRoutes: Routes = [
     CommonModule ,
     HttpModule,
     GamesModule,
+    LoggingModule,
     FormsModule,
     ReactiveFormsModule,
     Angular2FontawesomeModule ,

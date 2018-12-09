@@ -1,5 +1,5 @@
 export interface IGuess {
     srcIndexes: number[];
-    redCount: string;
-    whiteCount: string;
+    redCount: number;
+    whiteCount: number;
 }

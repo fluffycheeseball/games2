@@ -2,8 +2,8 @@ import { IGuess } from './iguess';
 
 export class Guess implements IGuess {
     srcIndexes: number[];
-    redCount: string;
-    whiteCount: string;
+    redCount: number;
+    whiteCount: number;
 
 
     constructor(solutionLength: number) {
@@ -12,8 +12,8 @@ export class Guess implements IGuess {
         for (let i = 0; i < solutionLength; i++) {
             this.srcIndexes.push(null);
         }
-        this.redCount = '';
-        this.whiteCount = '';
+        this.redCount = 0;
+        this.whiteCount = 0;
     }
 
     clone(solutionLength: number): Guess {
