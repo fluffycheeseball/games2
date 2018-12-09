@@ -1,0 +1,5 @@
+C:\git\games2\api
+--output-path=obj\Release\netcoreapp2.0\
+--application-name=api
+--content-root=C:\git\games2\api
+--file=
