@@ -1,0 +1,11 @@
+C:\git\Games2\WebApplication1\bin\Debug\netcoreapp2.0\WebApplication1.deps.json
+C:\git\Games2\WebApplication1\bin\Debug\netcoreapp2.0\WebApplication1.runtimeconfig.json
+C:\git\Games2\WebApplication1\bin\Debug\netcoreapp2.0\WebApplication1.runtimeconfig.dev.json
+C:\git\Games2\WebApplication1\bin\Debug\netcoreapp2.0\WebApplication1.dll
+C:\git\Games2\WebApplication1\bin\Debug\netcoreapp2.0\WebApplication1.pdb
+C:\git\Games2\WebApplication1\obj\Debug\netcoreapp2.0\WebApplication1.csprojAssemblyReference.cache
+C:\git\Games2\WebApplication1\obj\Debug\netcoreapp2.0\WebApplication1.csproj.CoreCompileInputs.cache
+C:\git\Games2\WebApplication1\obj\Debug\netcoreapp2.0\WebApplication1.AssemblyInfoInputs.cache
+C:\git\Games2\WebApplication1\obj\Debug\netcoreapp2.0\WebApplication1.AssemblyInfo.cs
+C:\git\Games2\WebApplication1\obj\Debug\netcoreapp2.0\WebApplication1.dll
+C:\git\Games2\WebApplication1\obj\Debug\netcoreapp2.0\WebApplication1.pdb

@@ -13,6 +13,14 @@ export class Utils {
         return false;
     }
 
+    public static NotEmpty(item: string): boolean {
+        if (item !== null && item !== undefined && item.length > 0) {
+            return true;
+        }
+        return false;
+    }
+
+
     public static getRandomBoolean(): boolean {
         const a = new Uint8Array(1);
         crypto.getRandomValues(a);

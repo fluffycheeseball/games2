@@ -1,9 +1,8 @@
-import { Guess } from './dtos/guess';
 import { Component, OnInit, HostListener } from '@angular/core';
-import { Piece } from './dtos/piece';
-import { SSL_OP_SSLREF2_REUSE_CERT_TYPE_BUG } from 'constants';
-import { forEach } from '@angular/router/src/utils/collection';
-import { IconSet } from './dtos/iconSet';
+import { IconsSets } from './iconsets';
+import { Piece, Guess, GameStatus, IGuess, IconSet } from './dtos';
+import { ArrayUtils, Utils, ConsoleLog } from '../../Utils';
+import { LogService } from '../../logging/services/log.service';
 
 
 @Component({
@@ -11,57 +10,38 @@ import { IconSet } from './dtos/iconSet';
   templateUrl: './decoder.component.html',
   styleUrls: ['./decoder.component.css']
 })
-export class DecoderComponent {
+export class DecoderComponent implements OnInit {
   public target: Piece[] = [];
   public src: Piece[] = [];
 
-  public greenTick = 'assets/images/greentick.png';
-  public amberTick = 'assets/images/ambertick.png';
+  public greenTick: string;
+  public amberTick: string;
+  public blankImage: string;
 
   public guess: Guess;
-  public prevGuesses: Guess[] = [];
+  public prevGuesses: IGuess[] = [];
   public solution: string[];
   public solutionLength = 4;
   public thetarget: string;
-  public gameComplete;
-  public playerHasWon = false;
-  public playerHasLost = false;
+  public gameStatus: GameStatus;
   public maxGuesses = 10;
   public sourceLength = 8;
   public iconSets: IconSet[];
   public iconSetDirectory = 'emoticons';
+  public baseUrl = 'assets/images/';
+  public guessIsComplete = false;
 
-  constructor() {
-    this.populateIconConfig();
+  constructor(private logService: LogService) {
+    this.iconSets = IconsSets;
+    this.setImagePaths();
+  }
+
+  ngOnInit() {
     this.newGame();
   }
 
-  populateIconConfig() {
-    this.iconSets = [
-      {
-        value: 'emoticons',
-        filePath: 'assets/images/emoticons/src0.png'
-      },
-      {
-        value: 'xmas',
-        filePath: 'assets/images/xmas/src0.png'
-      },
-      {
-        value: 'animals',
-        filePath: 'assets/images/animals/src0.png'
-      },
-      {
-        value: 'flags',
-        filePath: 'assets/images/flags/src0.png'
-      },
-      {
-        value: 'food',
-        filePath: 'assets/images/food/src0.png'
-      }
-    ];
-  }
   resetSource() {
-    let basePath = 'assets/images/' + this.iconSetDirectory +  '/src';
+    const basePath = `${this.baseUrl}${this.iconSetDirectory}/src`;
     this.src = [];
     for (let i = 0; i < this.sourceLength; ++i) {
       const piece: Piece = {
@@ -73,7 +53,7 @@ export class DecoderComponent {
   }
 
   cheat(itemId: string) {
-    let targetIndex: number = this.getTargetIndex(itemId);
+    const targetIndex: number = this.getTargetIndex(itemId);
     for (let i = 0; i < this.sourceLength; ++i) {
       if (this.src[i].filePath === this.solution[targetIndex]) {
         this.target[targetIndex].filePath = this.src[i].filePath;
@@ -88,25 +68,16 @@ export class DecoderComponent {
     for (let i = 0; i < this.solutionLength; ++i) {
       const piece: Piece = {
         id: 'target' + i.toString(),
-        filePath: this.getBlankImage()
+        filePath: this.blankImage
       };
       this.target.push(piece);
     }
   }
 
-  public getBlankImage(): string {
-    return 'assets/images/whitespot.png';
-  }
-
-  resetGuess() {
-    this.guess = {
-      srcIndexes: [],
-      redCount: '',
-      whiteCount: ''
-    };
-    for (let i = 0; i < this.solutionLength; ++i) {
-      this.guess.srcIndexes[i] = null;
-    }
+  public setImagePaths() {
+    this.blankImage = `${this.baseUrl}whitespot.png`;
+    this.greenTick = `${this.baseUrl}greentick.png`;
+    this.amberTick = `${this.baseUrl}ambertick.png`;
   }
 
   @HostListener('dragenter', ['$event'])
@@ -124,26 +95,28 @@ export class DecoderComponent {
     event.stopPropagation();
     const srcId = event.srcElement.id;
     const targetIndex = Number(this.thetarget.substring(6));
+    this.logService.debug(`onDrop called with srcId: ${srcId} , targetIndex ${targetIndex}`);
     this.updateGuess(srcId, targetIndex);
   }
 
   public updateGuess(srcId: string, targetIndex: number) {
-
+    this.logService.debug(`updateGuess called with srcId: ${srcId} , targetIndex ${targetIndex}`);
     const srcIndex = this.getSrcIndex(srcId);
     if (this.duplicateDetected(srcIndex)) { return; }
-    this.target[targetIndex].filePath = this.src[srcIndex].filePath;
-    this.guess.srcIndexes[targetIndex] = srcIndex;
+this.guess.srcIndexes[targetIndex] = srcIndex;
+this.target[targetIndex].filePath = this.src[srcIndex].filePath;
   }
 
-  public guessComplete(): boolean {
+  public checkGuessComplete() {
     if (this.guess.srcIndexes.some(p => p === null)) {
-      return true;
+      this.guessIsComplete = true;
     }
-    return false;
+    this.guessIsComplete = false;
   }
 
   public srcImageClicked(srcId: string) {
-    if (this.gameComplete) { return; }
+    this.logService.debug(`srcImageClicked called with srcId: ${srcId}`);
+    if (this.gameStatus.gameComplete) { return; }
     const targetIndex = this.guess.srcIndexes.indexOf(null);
     if (targetIndex > -1) {
       this.updateGuess(srcId, targetIndex);
@@ -151,21 +124,26 @@ export class DecoderComponent {
   }
 
   public targetImageClicked(targetId: string) {
-    if (this.gameComplete) { return; }
+    if (this.gameStatus.gameComplete) { return; }
     const targetIndex = this.getTargetIndex(targetId);
     this.guess.srcIndexes[targetIndex] = null;
-    this.target[targetIndex].filePath = this.getBlankImage();
+    this.target[targetIndex].filePath = this.blankImage;
   }
 
   public showPrevGuesses(): boolean {
-    return this.prevGuesses != null && this.prevGuesses != undefined && this.prevGuesses.length > 0;
+    return ArrayUtils.ArrayHasValue(this.prevGuesses);
   }
 
-  public GenerateSolution() {
+  clearSolution() {
+    this.logService.debug(`clearSolution`);
     this.solution = [];
     for (let i = 0; i < this.solutionLength; ++i) {
       this.solution.push('');
     }
+  }
+
+  populateSolution() {
+    this.logService.debug(`populateSolution`);
     for (let i = 0; i < this.solutionLength; ++i) {
       let isDuplicate = true;
       while (isDuplicate) {
@@ -179,10 +157,12 @@ export class DecoderComponent {
   }
 
   duplicateDetected(srcIndex: number): boolean {
+    let result = false;
     if (this.guess.srcIndexes.indexOf(srcIndex) >= 0) {
-      return true;
+      result = true;
     }
-    return false;
+    this.logService.debug(`duplicateDetected returning ${result}`);
+    return result;
   }
 
   getSrcIndex(id: string): number {
@@ -193,10 +173,27 @@ export class DecoderComponent {
     return (Number(id.substring(6)));
   }
 
-  checkGuess(envent) {
+  processGuess(event) {
+    this.checkGuess();
+    this.updatePreviousGuesses();
+    if (this.guess.redCount >= this.solutionLength) {
+      this.gameStatus.playerHasWon = true;
+      this.freezeGame();
+      return;
+    }
+    if (this.prevGuesses.length >= this.maxGuesses) {
+      this.gameStatus.playerHasLost = true;
+      this.freezeGame();
+      return;
+    }
+
+    this.resetTarget();
+    this.guess = new Guess(this.solutionLength);
+  }
+
+  public checkGuess() {
     let redCount = 0;
     let whiteCount = 0;
-
     for (let i = 0; i < this.solutionLength; ++i) {
       const filePathTocheck = this.src[this.guess.srcIndexes[i]].filePath;
       if (filePathTocheck === this.solution[i]) {
@@ -205,56 +202,35 @@ export class DecoderComponent {
         whiteCount++;
       }
     }
-    this.guess.redCount = redCount.toString();
-    this.guess.whiteCount = whiteCount.toString();
-    this.updatePreviousGuesses();
-    if (redCount >= this.solutionLength) {
-      this.playerHasWon = true;
-      this.freezeGame();
-      return;
-    }
-    if (this.prevGuesses.length >= this.maxGuesses) {
-      this.playerHasLost = true;
-      this.freezeGame();
-      return;
-    }
-
-    this.resetTarget();
-    this.resetGuess();
+    this.guess.redCount = redCount;
+    this.guess.whiteCount = whiteCount;
   }
 
   public changeIconSet(item: IconSet) {
-    if(item.value === this.iconSetDirectory)  {
+    if (item.value === this.iconSetDirectory) {
       return;
     }
     this.iconSetDirectory = item.value;
     this.newGame();
   }
   updatePreviousGuesses() {
-    const guessCopy: Guess = {
-      srcIndexes: [null, null, null, null],
-      redCount: this.guess.redCount,
-      whiteCount: this.guess.whiteCount
-    };
-    for (let i = 0; i < this.solutionLength; ++i) {
-      guessCopy.srcIndexes[i] = this.guess.srcIndexes[i];
-    }
+    const guessCopy = this.guess.clone(this.solutionLength);
     this.prevGuesses.unshift(guessCopy);
   }
 
   newGame() {
+    this.logService.debug(`newGame`);
+    this.guess = new Guess(this.solutionLength);
+    this.gameStatus = new GameStatus();
     this.prevGuesses = [];
     this.resetSource();
     this.resetTarget();
-    this.resetGuess();
-    this.GenerateSolution();
-    this.gameComplete = false;
-    this.playerHasWon = false;
-    this.playerHasLost = false;
+    this.clearSolution();
+    this.populateSolution();
   }
 
   freezeGame() {
-    this.gameComplete = true;
+    this.gameStatus.gameComplete = true;
   }
 }
 

@@ -1,0 +1,24 @@
+<form [formGroup]="profileForm" (submit)="submitProfile()">
+    <div>
+        <label for="firstName">First Name</label>
+        <input name="firstName" [ngClass]="{'has-danger': isInError('firstName') }" formControlName="firstName" type="text" placeholder="First Name"
+            required/>
+        <div *ngIf="isInError('firstName')">
+            <span>{{getError('firstName')}}</span>
+        </div>
+    </div>
+
+    <div>
+        <label for="surname">Surname</label>
+        <input name="surname" [ngClass]="{'has-danger': isInError('lastName') }" formControlName="lastName" type="text" placeholder="Surname" required
+        />
+        <div *ngIf="isInError('lastName')">
+            <span>{{getError('lastName')}}</span>
+        </div>
+    </div>
+
+    <div>
+        <button name="submit">Submit</button>
+    </div>
+
+</form>
