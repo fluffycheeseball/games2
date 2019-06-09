@@ -14,9 +14,9 @@ C:\git\games2\api\bin\Release\netcoreapp2.0\api.runtimeconfig.json
 C:\git\games2\api\bin\Release\netcoreapp2.0\api.runtimeconfig.dev.json
 C:\git\games2\api\bin\Release\netcoreapp2.0\api.dll
 C:\git\games2\api\bin\Release\netcoreapp2.0\api.pdb
-C:\git\games2\api\obj\Release\netcoreapp2.0\api.csprojAssemblyReference.cache
 C:\git\games2\api\obj\Release\netcoreapp2.0\api.csproj.CoreCompileInputs.cache
 C:\git\games2\api\obj\Release\netcoreapp2.0\api.AssemblyInfoInputs.cache
 C:\git\games2\api\obj\Release\netcoreapp2.0\api.AssemblyInfo.cs
 C:\git\games2\api\obj\Release\netcoreapp2.0\api.dll
 C:\git\games2\api\obj\Release\netcoreapp2.0\api.pdb
+C:\git\games2\api\obj\Release\netcoreapp2.0\api.csprojAssemblyReference.cache
